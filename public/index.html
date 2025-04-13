@@ -376,20 +376,26 @@ SPOTIFY_CLIENT_ID=your_client_id_here
 SPOTIFY_CLIENT_SECRET=your_client_secret_here</pre>
                                 <p>See <code>.env.example</code> for a complete template.</p>`;
                             filesElement.appendChild(helpText);
-                        } else if (data.message && (data.message.includes('Could not extract functions') || data.message.includes('Input stream error'))) {
+                        } else if (data.message && data.message.includes('Deezer ARL token not configured')) {
                             const helpText = document.createElement('div');
                             helpText.className = 'help-text';
-                            helpText.innerHTML = `<p>There's an issue with the YouTube extraction library used by the Spotify downloader.</p>
-                                <p>Alternative options:</p>
+                            helpText.innerHTML = `<p>To use Spotify and Deezer downloads, you need to:</p>
                                 <ol>
-                                    <li>Try a YouTube URL instead</li>
-                                    <li>Use one of these alternative tools for Spotify downloads:</li>
+                                    <li>Create a Deezer account at <a href="https://www.deezer.com" target="_blank">deezer.com</a></li>
+                                    <li>Log in to Deezer in your browser</li>
+                                    <li>Get your ARL token:</li>
+                                    <ul>
+                                        <li>Open Developer Tools (F12)</li>
+                                        <li>Go to Application tab > Cookies > www.deezer.com</li>
+                                        <li>Find the 'arl' cookie and copy its value</li>
+                                    </ul>
+                                    <li>Create a <code>.env</code> file in the project root directory</li>
+                                    <li>Add your ARL token to the <code>.env</code> file:</li>
                                 </ol>
-                                <ul>
-                                    <li><a href="https://github.com/SathyaBhat/spotify-dl" target="_blank">spotify-dl</a></li>
-                                    <li><a href="https://github.com/spotDL/spotify-downloader" target="_blank">spotDL</a></li>
-                                    <li><a href="https://github.com/Shabinder/SpotiFlyer" target="_blank">SpotiFlyer</a></li>
-                                </ul>`;
+                                <pre class="code-block">
+# Deezer ARL Token
+DEEZER_ARL=your_arl_token_here</pre>
+                                <p>See <code>.env.example</code> for a complete template.</p>`;
                             filesElement.appendChild(helpText);
                         }
                     } else if (data.status === 'not_found') {

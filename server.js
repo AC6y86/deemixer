@@ -5,11 +5,14 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
-const { exec } = require('child_process');
-const Spotify = require('spotifydl-core').default;
+const { exec, spawn } = require('child_process');
 const youtubeDl = require('youtube-dl-exec');
+const axios = require('axios');
 
-// Spotify API credentials from environment variables
+// Deezer ARL token from environment variables (required for deemix)
+const DEEZER_ARL = process.env.DEEZER_ARL || 'YOUR_DEEZER_ARL';
+
+// Spotify API credentials from environment variables (optional for metadata)
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || 'YOUR_SPOTIFY_CLIENT_ID';
 const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || 'YOUR_SPOTIFY_CLIENT_SECRET';
 
@@ -17,14 +20,42 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Routes
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// Create downloads directory if it doesn't exist
+const ensureDownloadsDir = () => {
+  const downloadsDir = path.join(__dirname, 'downloads');
+  if (!fs.existsSync(downloadsDir)) {
+    fs.mkdirSync(downloadsDir, { recursive: true });
+  }
+};
+
+// Helper function to check if a URL is from Spotify
+const isSpotifyUrl = (url) => {
+  return url && (url.includes('spotify.com') || url.includes('open.spotify'));
+};
+
+// Helper function to check if a URL is from Deezer
+const isDeezerUrl = (url) => {
+  return url && (url.includes('deezer.com') || url.includes('dzr.page.link'));
+};
+
+// Helper function to check if a URL is from YouTube
+const isYouTubeUrl = (url) => {
+  return url && (url.includes('youtube.com') || url.includes('youtu.be'));
+};
+
+// Helper function to validate URL format
+const isValidUrl = (url) => {
+  try {
+    new URL(url);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
 
 // Endpoint to check download status
 app.get('/download/status/:downloadId', (req, res) => {
@@ -47,37 +78,39 @@ app.get('/download/status/:downloadId', (req, res) => {
       return res.json({ status: 'in_progress', message: 'Download in progress' });
     } else {
       // Check if there's an error file
-      if (files.includes('download_error.txt')) {
-        // Read the error file
+      const errorFile = files.find(file => file.includes('error') && file.endsWith('.txt'));
+      if (errorFile) {
+        // Read the error file to get the error message
         try {
-          const errorMessage = fs.readFileSync(path.join(downloadPath, 'download_error.txt'), 'utf8');
-          return res.json({ 
-            status: 'error', 
-            message: errorMessage || 'Download failed' 
-          });
-        } catch (readErr) {
-          return res.json({ 
-            status: 'error', 
-            message: 'Download failed with unknown error' 
-          });
+          const errorContent = fs.readFileSync(path.join(downloadPath, errorFile), 'utf8');
+          const errorMessage = errorContent.split('\n')[0] || 'Unknown error occurred';
+          return res.json({ status: 'error', message: errorMessage });
+        } catch (e) {
+          return res.json({ status: 'error', message: 'An error occurred during download' });
         }
       }
       
-      // Files exist and no error, download is complete
-      // Log the files found for debugging
-      console.log(`Found ${files.length} files in download directory ${downloadPath}:`, files);
+      // Check if there's a "download_started.txt" file but no other files yet
+      if (files.length === 1 && files[0] === 'download_started.txt') {
+        return res.json({ status: 'in_progress', message: 'Download in progress' });
+      }
       
-      // Filter out any error or system files
-      const downloadableFiles = files.filter(file => 
-        file !== 'download_error.txt' && !file.startsWith('.'));
+      // If we get here, the download is complete
+      // Filter out text files and get the actual media files
+      const mediaFiles = files.filter(file => !file.endsWith('.txt'));
+      
+      // Create URLs for each file
+      const fileUrls = files.map(file => {
+        return {
+          name: file,
+          url: `/download/file/${downloadId}/${encodeURIComponent(file)}`
+        };
+      });
       
       return res.json({ 
         status: 'complete', 
         message: 'Download complete', 
-        files: downloadableFiles.map(file => ({
-          name: file,
-          url: `/download/file/${downloadId}/${encodeURIComponent(file)}`
-        }))
+        files: fileUrls
       });
     }
   });
@@ -93,40 +126,9 @@ app.get('/download/file/:downloadId/:filename', (req, res) => {
     return res.status(404).json({ error: 'File not found' });
   }
   
-  // Set headers to force download
-  res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(decodeURIComponent(filename))}"`); 
-  res.setHeader('Content-Type', 'application/octet-stream');
-  
   // Send the file
-  res.download(filePath, decodeURIComponent(filename), (err) => {
-    if (err) {
-      console.error('Error sending file:', err);
-      return res.status(500).json({ error: 'Failed to download file' });
-    }
-  });
+  res.download(filePath);
 });
-
-// Helper function to ensure downloads directory exists
-const ensureDownloadsDir = () => {
-  if (!fs.existsSync(path.join(__dirname, 'downloads'))) {
-    fs.mkdirSync(path.join(__dirname, 'downloads'), { recursive: true });
-  }
-};
-
-// Helper function to check if a URL is from Spotify
-const isSpotifyUrl = (url) => {
-  return url.includes('spotify.com') || url.includes('open.spotify');
-};
-
-// Helper function to check if a URL is from Deezer
-const isDeezerUrl = (url) => {
-  return url.includes('deezer.com');
-};
-
-// Helper function to check if a URL is from YouTube
-const isYouTubeUrl = (url) => {
-  return url.includes('youtube.com') || url.includes('youtu.be');
-};
 
 // API endpoint to handle download requests
 app.post('/download', async (req, res) => {
@@ -135,6 +137,11 @@ app.post('/download', async (req, res) => {
     
     if (!url) {
       return res.status(400).json({ error: 'URL is required' });
+    }
+    
+    // Validate URL format
+    if (!isValidUrl(url)) {
+      return res.status(400).json({ error: 'Invalid URL format. Please enter a valid URL.' });
     }
 
     // Ensure downloads directory exists
@@ -158,24 +165,21 @@ app.post('/download', async (req, res) => {
         
         // Send a response to inform the client that the download has started
         res.status(202).json({ 
-          message: 'YouTube download started. This may take a while depending on the video length.', 
+          message: 'YouTube download started. This may take a while depending on the video quality.', 
           downloadId: downloadId,
           statusUrl: `/download/status/${downloadId}`,
           autoCheckStatus: true
         });
         
-        // Download the video using youtube-dl-exec
+        // Download the YouTube video (asynchronously)
         (async () => {
           try {
-            // Use a more reliable output template that youtube-dl-exec understands
+            // Use youtube-dl to download the video in the highest quality
             await youtubeDl(url, {
-              // Use the download directory but let youtube-dl name the file
-              // This will include the video title in the filename
-              output: path.join(outputDir, '%(title)s.%(ext)s'),
-              // Download the highest quality available
-              format: 'bestvideo+bestaudio/best',
-              mergeOutputFormat: 'mp4',
-              noCheckCertificate: true,
+              output: outputPath,
+              format: 'bestvideo+bestaudio/best', // Get the best quality
+              mergeOutputFormat: 'mp4',           // Merge into MP4 format
+              noCheckCertificates: true,
               noWarnings: true,
               preferFreeFormats: true,
               addHeader: [
@@ -184,17 +188,7 @@ app.post('/download', async (req, res) => {
               ]
             });
             
-            // Log the directory contents after download
-            fs.readdir(outputDir, (err, files) => {
-              if (err) {
-                console.error('Error reading download directory:', err);
-              } else {
-                console.log(`Files in download directory after download:`, files);
-              }
-            });
-            
-            console.log(`Download completed to ${outputPath}`);
-            
+            console.log(`YouTube download completed to ${outputPath}`);
             // We don't send the file here since we've already sent a 202 response
             // The client will need to poll for the download status or use WebSockets
             // for real-time updates
@@ -210,8 +204,8 @@ app.post('/download', async (req, res) => {
         return res.status(500).json({ error: 'Failed to set up YouTube download' });
       }
     } 
-    // Check if URL is from Spotify
-    else if (isSpotifyUrl(url)) {
+    // Check if URL is from Spotify or Deezer
+    else if (isSpotifyUrl(url) || isDeezerUrl(url)) {
       try {
         // Create a unique download ID and path
         const downloadId = Date.now().toString();
@@ -222,31 +216,12 @@ app.post('/download', async (req, res) => {
           fs.mkdirSync(outputPath, { recursive: true });
         }
         
-        // Check if Spotify credentials are set
-        // Check if using placeholder credentials
-        if (SPOTIFY_CLIENT_ID === 'YOUR_SPOTIFY_CLIENT_ID' || SPOTIFY_CLIENT_SECRET === 'YOUR_SPOTIFY_CLIENT_SECRET') {
+        // Check if Deezer ARL token is set
+        if (DEEZER_ARL === 'YOUR_DEEZER_ARL') {
           return res.status(400).json({ 
-            error: 'Spotify API credentials not configured. Please add your Spotify Developer credentials to the .env file.'
+            error: 'Deezer ARL token not configured. Please add your Deezer ARL token to the .env file.'
           });
         }
-        
-        // Initialize the Spotify downloader with custom options
-        const spotify = new Spotify({
-          clientId: SPOTIFY_CLIENT_ID,
-          clientSecret: SPOTIFY_CLIENT_SECRET,
-          directory: {
-            tracks: outputPath,
-            albums: outputPath,
-            playlists: outputPath
-          },
-          // Set to download FLAC format (highest quality)
-          format: {
-            audio: 'FLAC'
-          },
-          // Use alternative download method if available
-          // This can help bypass the ytdl-core issues
-          alternativeMethod: true
-        });
         
         // Create a placeholder file to indicate download has started
         const placeholderPath = path.join(outputPath, 'download_started.txt');
@@ -254,59 +229,61 @@ app.post('/download', async (req, res) => {
         
         // Send a response to inform the client that the download has started
         res.status(202).json({ 
-          message: 'Spotify download started. This may take a while depending on the content.', 
+          message: isSpotifyUrl(url) ? 'Spotify download started via Deezer' : 'Deezer download started', 
           downloadId: downloadId,
           statusUrl: `/download/status/${downloadId}`,
-          autoCheckStatus: true
+          autoCheckStatus: true,
+          note: 'Note: Some tracks may not be available for download due to licensing restrictions or subscription level.'
         });
         
-        // Download the Spotify track/album/playlist
+        // Use our Python script to download from Deezer (or convert Spotify URL to Deezer)
         (async () => {
           try {
-            // Create a fallback download info file with instructions
-            const fallbackInfoPath = path.join(outputPath, 'alternative_download_info.txt');
-            const fallbackContent = `
-Spotify Download Information
-=========================
-Requested URL: ${url}
-Time: ${new Date().toISOString()}
-
-Due to current limitations with the Spotify API and YouTube extraction,
-direct downloads may not be working properly.
-
-Alternative download options:
-1. Use spotify-dl CLI tool: https://github.com/SathyaBhat/spotify-dl
-2. Use spotDL: https://github.com/spotDL/spotify-downloader
-3. Use Spotiflyer: https://github.com/Shabinder/SpotiFlyer
-
-These tools may provide better compatibility with the latest Spotify API changes.
-`;
-            fs.writeFileSync(fallbackInfoPath, fallbackContent);
+            const pythonScript = path.join(__dirname, 'deemix_downloader.py');
+            const pythonVenv = path.join(__dirname, 'deemix-env', 'bin', 'python');
             
-            // Determine if it's a track, album, or playlist and download accordingly
-            if (url.includes('/track/')) {
-              await spotify.downloadTrack(url);
-            } else if (url.includes('/album/')) {
-              await spotify.downloadAlbum(url);
-            } else if (url.includes('/playlist/')) {
-              await spotify.downloadPlaylist(url);
-            } else {
-              console.error('Unsupported Spotify URL type');
-              return;
-            }
+            // Make the Python script executable
+            fs.chmodSync(pythonScript, '755');
             
-            console.log(`Download completed to ${outputPath}`);
+            // Run the Python script to download the content
+            const pythonProcess = spawn(pythonVenv, [
+              pythonScript,
+              '--url', url,
+              '--output', outputPath,
+              '--arl', DEEZER_ARL
+            ]);
             
-            // We don't send the file here since we've already sent a 202 response
-            // The client will need to poll for the download status or use WebSockets
-            // for real-time updates, which we'll implement in a future version
+            // Log output from the Python script
+            pythonProcess.stdout.on('data', (data) => {
+              console.log(`Python stdout: ${data}`);
+            });
+            
+            pythonProcess.stderr.on('data', (data) => {
+              console.error(`Python stderr: ${data}`);
+              
+              // Create an error log file
+              const errorLogPath = path.join(outputPath, 'python_error.log');
+              fs.appendFileSync(errorLogPath, data);
+            });
+            
+            pythonProcess.on('close', (code) => {
+              console.log(`Python process exited with code ${code}`);
+              
+              if (code !== 0) {
+                // Create an error file if the Python script failed
+                const errorFilePath = path.join(outputPath, 'download_error.txt');
+                fs.writeFileSync(errorFilePath, `Download failed with exit code ${code}. Check python_error.log for details.`);
+              } else {
+                console.log(`Download completed to ${outputPath}`);
+              }
+            });
           } catch (error) {
-            console.error('Error downloading from Spotify:', error);
+            console.error('Error downloading from Deezer:', error);
             
             // Create a more detailed error file with troubleshooting info
             const errorFilePath = path.join(outputPath, 'download_error.txt');
             const errorContent = `
-Spotify Download Error
+Download Error
 ====================
 Time: ${new Date().toISOString()}
 URL: ${url}
@@ -314,61 +291,32 @@ URL: ${url}
 Error Message: ${error.message || 'Unknown error'}
 
 Possible Solutions:
-1. Check your Spotify API credentials
-2. The ytdl-core library may need to be updated
-3. Try using an alternative download method (see alternative_download_info.txt)
+1. Check your Deezer ARL token
+2. Make sure the URL is valid
+3. Check if the content is available on Deezer
 
 Full Error Details:
 ${JSON.stringify(error, null, 2)}
 `;
             
             fs.writeFileSync(errorFilePath, errorContent);
-            
-            // Create the alternative download info file as a fallback
-            const alternativeInfoPath = path.join(outputPath, 'alternative_download_info.txt');
-            const alternativeContent = `
-Alternative Download Options
-==========================
-Since the automatic download failed, you can try these alternatives:
-
-1. Use spotify-dl CLI tool: https://github.com/SathyaBhat/spotify-dl
-2. Use spotDL: https://github.com/spotDL/spotify-downloader
-3. Use Spotiflyer: https://github.com/Shabinder/SpotiFlyer
-
-These tools are regularly updated to work with the latest Spotify API changes.
-`;
-            
-            fs.writeFileSync(alternativeInfoPath, alternativeContent);
           }
         })();
       } catch (error) {
-        console.error('Error setting up Spotify download:', error);
-        return res.status(500).json({ error: 'Failed to set up Spotify download' });
+        console.error('Error setting up download:', error);
+        res.status(500).json({ error: 'Error setting up download: ' + error.message });
       }
-    }
-    // Check if URL is from Deezer
-    else if (isDeezerUrl(url)) {
-      // For now, we'll return a message that this feature is coming soon
-      return res.status(501).json({ 
-        error: 'Deezer downloads are coming soon! Currently only YouTube and Spotify URLs are supported.' 
-      });
     } else {
-      // For other URLs, return error
-      return res.status(400).json({ 
-        error: 'URL not supported. Currently only YouTube URLs are supported.' 
-      });
+      // Unsupported URL
+      return res.status(400).json({ error: 'Unsupported URL. Only YouTube, Spotify, and Deezer URLs are supported.' });
     }
   } catch (error) {
-    console.error('Error processing download:', error);
-    res.status(500).json({ error: 'Failed to process download' });
+    console.error('Error handling download request:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Start server
-if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-}
-
-module.exports = app; // Export for testing
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

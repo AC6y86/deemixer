@@ -411,26 +411,276 @@ app.get('/download/status/:downloadId', (req, res) => {
         // Debug each file from metadata
         fileUrls.forEach(file => {
           console.log(`File from metadata: ${JSON.stringify(file)}`);
+          
           // Ensure the URL is properly encoded
-          file.url = `/download/file/${downloadId}/${encodeURIComponent(file.name)}`;
+          // Use the most appropriate name property available
+          const fileName = file.originalPath || file.actualPath || file.path || file.name || file.simpleId;
+          if (fileName) {
+            file.url = `/download/file/${downloadId}/${encodeURIComponent(fileName)}`;
+            console.log(`Created URL for file: ${file.url}`);
+          }
         });
       } else {
-        console.log('Using files from directory listing');
-        fileUrls = mediaFiles.map(file => ({
-          name: file,
-          url: `/download/file/${downloadId}/${encodeURIComponent(file)}`
-        }));
+        // Check if we have files.json even if filesWithMetadata is empty
+        if (fs.existsSync(filesJsonPath)) {
+          try {
+            const fileContent = fs.readFileSync(filesJsonPath, 'utf8');
+            const filesData = JSON.parse(fileContent);
+            
+            if (filesData && filesData.files && filesData.files.length > 0) {
+              console.log(`Found ${filesData.files.length} files in files.json, creating download links`);
+              
+              fileUrls = filesData.files.map(file => {
+                const fileName = file.path;
+                return {
+                  name: fileName,
+                  path: fileName,
+                  size: file.size,
+                  type: file.type,
+                  url: `/download/file/${downloadId}/${encodeURIComponent(fileName)}`
+                };
+              });
+            }
+          } catch (e) {
+            console.error('Error processing files.json for download links:', e);
+          }
+        }
+        
+        // If we still don't have any file URLs, fall back to directory listing
+        if (fileUrls.length === 0) {
+          console.log('Using files from directory listing');
+          fileUrls = mediaFiles.map(file => ({
+            name: file,
+            url: `/download/file/${downloadId}/${encodeURIComponent(file)}`
+          }));
+        }
       }
       
       console.log('Final file URLs to send to client:', fileUrls);
       
+      // Check if we have any files to return
+      if (fileUrls.length === 0) {
+        // If no files found in metadata or directory listing, check the download directory for any audio files
+        const allFiles = fs.readdirSync(downloadPath);
+        const audioFiles = allFiles.filter(file => {
+          const ext = path.extname(file).toLowerCase();
+          return ['.mp3', '.flac', '.m4a', '.wav', '.ogg', '.aac'].includes(ext);
+        });
+        
+        if (audioFiles.length > 0) {
+          console.log(`Found ${audioFiles.length} audio files in download directory that weren't detected earlier`);
+          fileUrls = audioFiles.map(file => ({
+            name: file,
+            path: file,
+            url: `/download/file/${downloadId}/${encodeURIComponent(file)}`
+          }));
+        }
+      }
+      
+      // Check if we have any files in the music directory that match this download
+      // We need to be selective and only include files that were downloaded as part of this request
+      const musicDir = path.join(__dirname, 'music');
+      if (fs.existsSync(musicDir)) {
+        try {
+          // Get the list of files from the download directory first
+          const downloadFiles = fs.readdirSync(downloadPath)
+            .filter(file => {
+              const ext = path.extname(file).toLowerCase();
+              return ['.mp3', '.flac', '.m4a', '.wav', '.ogg', '.aac'].includes(ext);
+            })
+            .map(file => file.toLowerCase());
+          
+          // Only include music files that match the files in the download directory
+          // This ensures we only show files relevant to the current download
+          if (downloadFiles.length > 0) {
+            console.log(`Found ${downloadFiles.length} audio files in download directory to match against music directory`);
+            
+            const musicFiles = fs.readdirSync(musicDir);
+            const matchingMusicFiles = musicFiles
+              .filter(file => {
+                const ext = path.extname(file).toLowerCase();
+                // Only include files with matching names to what's in the download directory
+                return ['.mp3', '.flac', '.m4a', '.wav', '.ogg', '.aac'].includes(ext) && 
+                       downloadFiles.some(downloadFile => {
+                         // Check if the music file matches any download file (ignoring case)
+                         return file.toLowerCase() === downloadFile;
+                       });
+              })
+              .map(file => ({
+                name: file,
+                path: file,
+                url: `/download/file/music/${encodeURIComponent(file)}`,
+                location: 'music',
+                source: 'current_download'
+              }));
+              
+            if (matchingMusicFiles.length > 0) {
+              console.log(`Found ${matchingMusicFiles.length} matching music files in music directory`);
+              // Add these files to the response
+              fileUrls = [...fileUrls, ...matchingMusicFiles];
+            }
+          }
+        } catch (err) {
+          console.error(`Error checking music directory: ${err.message}`);
+        }
+      }
+      
+      // Ensure we have download links for all files
+      fileUrls.forEach(file => {
+        if (!file.url) {
+          const fileName = file.path || file.name || file.originalPath || file.actualPath;
+          if (fileName) {
+            file.url = `/download/file/${downloadId}/${encodeURIComponent(fileName)}`;
+          }
+        }
+      });
+      
+      console.log(`Final file URLs to send to client: ${JSON.stringify(fileUrls)}`);
+      
+      // If no files were found in the normal process, do one last check for any audio files in the download directory
+      if (fileUrls.length === 0) {
+        console.log('No files found through normal detection. Performing last-resort check for any audio files...');
+        try {
+          // Check for any audio files in the download directory as a last resort
+          const allFiles = fs.readdirSync(downloadPath);
+          const audioFiles = allFiles.filter(file => {
+            const ext = path.extname(file).toLowerCase();
+            return ['.mp3', '.flac', '.m4a', '.wav', '.ogg', '.aac'].includes(ext);
+          });
+          
+          if (audioFiles.length > 0) {
+            console.log(`Last resort check found ${audioFiles.length} audio files in download directory`);
+            fileUrls = audioFiles.map(file => ({
+              name: file,
+              path: file,
+              url: `/download/file/${downloadId}/${encodeURIComponent(file)}`,
+              source: 'last_resort_check'
+            }));
+          }
+        } catch (err) {
+          console.error(`Error in last-resort file check: ${err.message}`);
+        }
+      }
+      
+      // Check music directory as a final fallback if still no files found
+      if (fileUrls.length === 0) {
+        console.log('Still no files found. Checking music directory as final fallback...');
+        const musicDir = path.join(__dirname, 'music');
+        if (fs.existsSync(musicDir)) {
+          try {
+            const musicFiles = fs.readdirSync(musicDir);
+            // Get most recently modified files first (likely to be from this download)
+            const recentMusicFiles = musicFiles
+              .filter(file => {
+                const ext = path.extname(file).toLowerCase();
+                return ['.mp3', '.flac', '.m4a', '.wav', '.ogg', '.aac'].includes(ext);
+              })
+              .map(file => ({
+                name: file,
+                path: file,
+                fullPath: path.join(musicDir, file),
+                url: `/download/file/music/${encodeURIComponent(file)}`,
+                location: 'music',
+                source: 'final_fallback'
+              }));
+              
+            // Sort by modification time (most recent first)
+            recentMusicFiles.sort((a, b) => {
+              const statA = fs.statSync(a.fullPath);
+              const statB = fs.statSync(b.fullPath);
+              return statB.mtime.getTime() - statA.mtime.getTime();
+            });
+            
+            // Take the most recent file if available
+            if (recentMusicFiles.length > 0) {
+              console.log(`Final fallback found ${recentMusicFiles.length} music files, using most recent`);
+              // Just use the most recent file as it's likely from this download
+              fileUrls = [recentMusicFiles[0]];
+              console.log(`Using most recent music file: ${fileUrls[0].name}`);
+            }
+          } catch (err) {
+            console.error(`Error in music directory fallback check: ${err.message}`);
+          }
+        }
+      }
+      
+      // Generate HTML content for the status page with download buttons
+      let downloadButtonsHtml = '';
+      if (fileUrls.length > 0) {
+        downloadButtonsHtml = fileUrls.map(file => {
+          const fileName = file.path || file.name || file.originalPath || file.actualPath || 'Download File';
+          const fileSize = file.size ? `(${(file.size / (1024 * 1024)).toFixed(2)} MB)` : '';
+          return `<a href="${file.url}" class="download-link" download="${fileName}">${fileName} ${fileSize}</a>`;
+        }).join('<br>');
+      }
+      
+      // Log the final state before sending response
+      console.log(`Final file count: ${fileUrls.length}`);
+      console.log(`Download buttons HTML generated: ${downloadButtonsHtml ? 'Yes' : 'No'}`);
+      
+      // Add the download buttons HTML to the response
       return res.json({ 
         status: 'complete', 
         message: 'Download complete', 
-        files: fileUrls
+        files: fileUrls,
+        downloadButtonsHtml: downloadButtonsHtml
       });
     }
   });
+});
+
+// Endpoint to check music directory for recent files
+app.get('/download/check-music', (req, res) => {
+  const { downloadId } = req.query;
+  console.log(`\n=== MUSIC DIRECTORY CHECK ===`);
+  console.log(`Music directory check requested for download ID: ${downloadId}`);
+  
+  const musicDir = path.join(__dirname, 'music');
+  if (!fs.existsSync(musicDir)) {
+    console.log(`Music directory does not exist: ${musicDir}`);
+    return res.json({ files: [] });
+  }
+  
+  try {
+    const musicFiles = fs.readdirSync(musicDir);
+    // Filter for audio files
+    const audioFiles = musicFiles.filter(file => {
+      const ext = path.extname(file).toLowerCase();
+      return ['.mp3', '.flac', '.m4a', '.wav', '.ogg', '.aac'].includes(ext);
+    });
+    
+    // Map files to objects with metadata
+    const filesWithMetadata = audioFiles.map(file => {
+      const filePath = path.join(musicDir, file);
+      const stats = fs.statSync(filePath);
+      return {
+        name: file,
+        path: file,
+        url: `/download/file/music/${encodeURIComponent(file)}`,
+        size: stats.size,
+        mtime: stats.mtime.getTime(),
+        location: 'music'
+      };
+    });
+    
+    // Sort by modification time (most recent first)
+    filesWithMetadata.sort((a, b) => b.mtime - a.mtime);
+    
+    // Take the most recent file if available, or all files if no downloadId provided
+    const filesToReturn = downloadId && filesWithMetadata.length > 0 ? [filesWithMetadata[0]] : filesWithMetadata;
+    
+    console.log(`Found ${filesWithMetadata.length} audio files in music directory, returning ${filesToReturn.length}`);
+    return res.json({ 
+      files: filesToReturn,
+      downloadButtonsHtml: filesToReturn.map(file => {
+        const fileSize = file.size ? `(${(file.size / (1024 * 1024)).toFixed(2)} MB)` : '';
+        return `<a href="${file.url}" class="download-link" download="${file.name}">${file.name} ${fileSize}</a>`;
+      }).join('<br>')
+    });
+  } catch (err) {
+    console.error(`Error checking music directory: ${err.message}`);
+    return res.json({ files: [] });
+  }
 });
 
 // Endpoint to download a specific file

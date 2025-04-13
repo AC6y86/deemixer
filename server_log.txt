@@ -1,0 +1,486 @@
+Server running on port 3000
+
+=== DOWNLOAD STATUS CHECK ===
+[2025-04-13T22:44:09.372Z] Checking download status for ID: 1744584249336
+Download path: /home/joepaley/projects/deemixer/downloads/1744584249336
+SUCCESS: Download directory exists: /home/joepaley/projects/deemixer/downloads/1744584249336
+Ensuring file mapping exists for download 1744584249336...
+
+=== CREATING FILE MAPPING FOR EXISTING DOWNLOAD ===
+Download ID: 1744584249336
+Download path: /home/joepaley/projects/deemixer/downloads/1744584249336
+WARNING: files.json not found at /home/joepaley/projects/deemixer/downloads/1744584249336/files.json
+No audio files found in directory, cannot create mapping
+Directory contents for 1744584249336:
+  1. download_started.txt (0.12 KB) - File
+
+=== FILE PROCESSING ===
+Found 1 files in directory 1744584249336
+SUCCESS: Files found in directory 1744584249336
+  1. download_started.txt (0.12 KB) - Extension: .txt
+
+=== FILE ANALYSIS ===
+
+=== DOWNLOAD STATUS CHECK ===
+[2025-04-13T22:44:11.269Z] Checking download status for ID: 1744584249261
+Download path: /home/joepaley/projects/deemixer/downloads/1744584249261
+SUCCESS: Download directory exists: /home/joepaley/projects/deemixer/downloads/1744584249261
+Ensuring file mapping exists for download 1744584249261...
+
+=== CREATING FILE MAPPING FOR EXISTING DOWNLOAD ===
+Download ID: 1744584249261
+Download path: /home/joepaley/projects/deemixer/downloads/1744584249261
+WARNING: files.json not found at /home/joepaley/projects/deemixer/downloads/1744584249261/files.json
+No audio files found in directory, cannot create mapping
+Directory contents for 1744584249261:
+  1. arl_temp.txt (0.19 KB) - File
+  2. download_started.txt (0.18 KB) - File
+
+=== FILE PROCESSING ===
+Found 2 files in directory 1744584249261
+SUCCESS: Files found in directory 1744584249261
+  1. arl_temp.txt (0.19 KB) - Extension: .txt
+  2. download_started.txt (0.18 KB) - Extension: .txt
+
+=== FILE ANALYSIS ===
+Processing completed download for 1744584249261
+Found 0 media files after filtering: []
+
+=== METADATA PROCESSING ===
+Checking for files.json at: /home/joepaley/projects/deemixer/downloads/1744584249261/files.json
+files.json not found, checking for media files directly
+Using files from directory listing
+Final file URLs to send to client: []
+Final file URLs to send to client: []
+No files found through normal detection. Performing last-resort check for any audio files...
+Final file count: 0
+Download buttons HTML generated: No
+
+=== DOWNLOAD STATUS CHECK ===
+[2025-04-13T22:44:11.340Z] Checking download status for ID: 1744584249336
+Download path: /home/joepaley/projects/deemixer/downloads/1744584249336
+SUCCESS: Download directory exists: /home/joepaley/projects/deemixer/downloads/1744584249336
+Ensuring file mapping exists for download 1744584249336...
+
+=== CREATING FILE MAPPING FOR EXISTING DOWNLOAD ===
+Download ID: 1744584249336
+Download path: /home/joepaley/projects/deemixer/downloads/1744584249336
+WARNING: files.json not found at /home/joepaley/projects/deemixer/downloads/1744584249336/files.json
+No audio files found in directory, cannot create mapping
+Directory contents for 1744584249336:
+  1. arl_temp.txt (0.19 KB) - File
+  2. download_started.txt (0.18 KB) - File
+
+=== FILE PROCESSING ===
+Found 2 files in directory 1744584249336
+SUCCESS: Files found in directory 1744584249336
+  1. arl_temp.txt (0.19 KB) - Extension: .txt
+  2. download_started.txt (0.18 KB) - Extension: .txt
+
+=== FILE ANALYSIS ===
+Processing completed download for 1744584249336
+Found 0 media files after filtering: []
+
+=== METADATA PROCESSING ===
+Checking for files.json at: /home/joepaley/projects/deemixer/downloads/1744584249336/files.json
+files.json not found, checking for media files directly
+Using files from directory listing
+Final file URLs to send to client: []
+Final file URLs to send to client: []
+No files found through normal detection. Performing last-resort check for any audio files...
+Final file count: 0
+Download buttons HTML generated: No
+
+=== DOWNLOAD STATUS CHECK ===
+[2025-04-13T22:44:11.388Z] Checking download status for ID: 1744584249336
+Download path: /home/joepaley/projects/deemixer/downloads/1744584249336
+SUCCESS: Download directory exists: /home/joepaley/projects/deemixer/downloads/1744584249336
+Ensuring file mapping exists for download 1744584249336...
+
+=== CREATING FILE MAPPING FOR EXISTING DOWNLOAD ===
+Download ID: 1744584249336
+Download path: /home/joepaley/projects/deemixer/downloads/1744584249336
+WARNING: files.json not found at /home/joepaley/projects/deemixer/downloads/1744584249336/files.json
+No audio files found in directory, cannot create mapping
+Directory contents for 1744584249336:
+  1. arl_temp.txt (0.19 KB) - File
+  2. download_started.txt (0.18 KB) - File
+
+=== FILE PROCESSING ===
+Found 2 files in directory 1744584249336
+SUCCESS: Files found in directory 1744584249336
+  1. arl_temp.txt (0.19 KB) - Extension: .txt
+  2. download_started.txt (0.18 KB) - Extension: .txt
+
+=== FILE ANALYSIS ===
+Processing completed download for 1744584249336
+Found 0 media files after filtering: []
+
+=== METADATA PROCESSING ===
+Checking for files.json at: /home/joepaley/projects/deemixer/downloads/1744584249336/files.json
+files.json not found, checking for media files directly
+Using files from directory listing
+Final file URLs to send to client: []
+Final file URLs to send to client: []
+No files found through normal detection. Performing last-resort check for any audio files...
+Final file count: 0
+Download buttons HTML generated: No
+Python stdout: Downloading from Deezer: https://www.deezer.com/us/track/2653095?host=5746063391&utm_campaign=clipboard-generic&utm_source=user_sharing&utm_content=track-2653095&deferredFl=1
+Default download location: /home/joepaley/projects/deemixer/music
+Running command: cat /home/joepaley/projects/deemixer/downloads/1744584249336/arl_temp.txt | /home/joepaley/projects/deemixer/deemix-env/bin/deemix -b 320 https://www.deezer.com/us/track/2653095?host=5746063391&utm_campaign=clipboard-generic&utm_source=user_sharing&utm_content=track-2653095&deferredFl=1
+
+=== FILE DISCOVERY PROCESS ===
+[2025-04-13T15:44:13.348508] Searching for downloaded files
+Default download location: /home/joepaley/projects/deemixer/music
+Output path: /home/joepaley/projects/deemixer/downloads/1744584249336
+
+=== DEEMIX OUTPUT ANALYSIS ===
+Analyzing deemix output for file information
+
+=== FILE COPYING PROCESS ===
+[2025-04-13T15:44:13.348588] Preparing to copy files to output directory
+SUCCESS: Found 1 files to copy
+
+File 1: J.J. Johnson - Blues Waltz.mp3
+  Full path: /home/joepaley/projects/deemixer/music/J.J. Johnson - Blues Waltz.mp3
+  Size: 19698797 bytes (18.79 MB)
+  Last modified: 2025-04-13T15:41:37.957884
+  Is readable: True
+  Destination: /home/joepaley/projects/deemixer/downloads/1744584249336/J.J. Johnson - Blues Waltz.mp3
+  Copying file...
+  SUCCESS: File copied successfully
+  Destination size: 19698797 bytes
+[track_2653095_3] J.J. Johnson - Blues Waltz :: Getting tags.
+[track_2653095_3] J.J. Johnson - Blues Waltz :: Tags got.
+[track_2653095_3] J.J. Johnson - Blues Waltz :: Getting download URL.
+[track_2653095_3] J.J. Johnson - Blues Waltz :: Download URL got.
+[track_2653095_3] J.J. Johnson - Blues Waltz :: Downloading album art.
+[track_2653095_3] J.J. Johnson - Blues Waltz :: Album art downloaded.
+[track_2653095_3] J.J. Johnson - Blues Waltz :: Track already downloaded.
+[track_2653095_3] Download at 100%
+[track_2653095_3] Completed download of /J.J. Johnson - Blues Waltz.mp3
+[track_2653095_3] Finished downloading
+All done!
+
+Checking output directory for audio files: /home/joepaley/projects/deemixer/downloads/1744584249336
+Walking directory: /home/joepaley/projects/deemixer/downloads/1744584249336
+Found files: ['download_started.txt', 'J.J. Johnson - Blues Waltz.mp3']
+Non-audio file: download_started.txt
+Found audio file: J.J. Johnson - Blues Waltz.mp3
+All files in output directory: ['/home/joepaley/projects/deemixer/downloads/1744584249336/download_started.txt', '/home/joepaley/projects/deemixer/downloads/1744584249336/J.J. Johnson - Blues Waltz.mp3']
+Audio files in output directory: ['/home/joepaley/projects/deemixer/downloads/1744584249336/J.J. Johnson - Blues Waltz.mp3']
+Downloaded 1 audio files:
+  - /home/joepaley/projects/deemixer/downloads/1744584249336/J.J. Johnson - Blues Waltz.mp3 (18.79 MB)
+
+=== METADATA GENERATION ===
+[2025-04-13T15:44:13.363709] Generating metadata for 1 audio files
+Metadata file will be created at: /home/joepaley/projects/deemixer/downloads/1744584249336/files.json
+File 1:
+  Full path: /home/joepaley/projects/deemixer/downloads/1744584249336/J.J. Johnson - Blues Waltz.mp3
+  Basename: J.J. Johnson - Blues Waltz.mp3
+  Size: 19698797 bytes (18.79 MB)
+  Extension: mp3
+  MIME type: audio/mp3
+  File is readable: Yes
+
+Creating files.json with the following content:
+{
+  "files": [
+    {
+      "path": "J.J. Johnson - Blues Waltz.mp3",
+      "size": 19698797,
+      "type": "audio/mp3",
+      "readable": true
+    }
+  ]
+}
+SUCCESS: files.json created successfully at /home/joepaley/projects/deemixer/downloads/1744584249336/files.json
+
+Verification - files.json content:
+{
+  "files": [
+    {
+      "path": "J.J. Johnson - Blues Waltz.mp3",
+      "size": 19698797,
+      "type": "audio/mp3",
+      "readable": true
+    }
+  ]
+}
+JSON validation: Success - parsed 1 file entries
+Download completed successfully
+
+Python process exited with code 0
+Download completed to /home/joepaley/projects/deemixer/downloads/1744584249336
+
+=== DOWNLOAD STATUS CHECK ===
+[2025-04-13T22:44:13.396Z] Checking download status for ID: 1744584249336
+Download path: /home/joepaley/projects/deemixer/downloads/1744584249336
+SUCCESS: Download directory exists: /home/joepaley/projects/deemixer/downloads/1744584249336
+Ensuring file mapping exists for download 1744584249336...
+
+=== CREATING FILE MAPPING FOR EXISTING DOWNLOAD ===
+Download ID: 1744584249336
+Download path: /home/joepaley/projects/deemixer/downloads/1744584249336
+SUCCESS: Created file mapping with 1 entries
+Directory contents for 1744584249336:
+  1. J.J. Johnson - Blues Waltz.mp3 (19237.11 KB) - File
+  2. download_complete.txt (0.21 KB) - File
+  3. download_started.txt (0.18 KB) - File
+  4. file_mapping.json (0.19 KB) - File
+  5. files.json (0.15 KB) - File
+
+=== FILE PROCESSING ===
+Found 5 files in directory 1744584249336
+SUCCESS: Files found in directory 1744584249336
+  1. J.J. Johnson - Blues Waltz.mp3 (19237.11 KB) - Extension: .mp3
+  2. download_complete.txt (0.21 KB) - Extension: .txt
+  3. download_started.txt (0.18 KB) - Extension: .txt
+  4. file_mapping.json (0.19 KB) - Extension: .json
+  5. files.json (0.15 KB) - Extension: .json
+
+=== FILE ANALYSIS ===
+Processing completed download for 1744584249336
+Found 2 media files after filtering: [ 'J.J. Johnson - Blues Waltz.mp3', 'file_mapping.json' ]
+
+=== METADATA PROCESSING ===
+Checking for files.json at: /home/joepaley/projects/deemixer/downloads/1744584249336/files.json
+SUCCESS: files.json exists at /home/joepaley/projects/deemixer/downloads/1744584249336/files.json
+files.json content (first 100 chars): {
+  "files": [
+    {
+      "path": "J.J. Johnson - Blues Waltz.mp3",
+      "size": 19698797,
+      "...
+SUCCESS: Parsed files.json successfully
+filesData structure: object
+filesData keys: files
+filesData.files is an array: true
+filesData.files length: 1
+First file in metadata:
+  - Keys: path, size, type, readable
+  - path: J.J. Johnson - Blues Waltz.mp3
+  - size: 19698797
+  - type: audio/mp3
+
+=== FILE URL GENERATION ===
+Processing 1 files from metadata
+
+Processing file 1:
+  Original path: J.J. Johnson - Blues Waltz.mp3
+  File extension: mp3
+  Generated simple ID: track_1.mp3
+  Generated URL: /download/file/1744584249336/track_1.mp3
+  File exists at /home/joepaley/projects/deemixer/downloads/1744584249336/J.J. Johnson - Blues Waltz.mp3: true
+
+=== FILE MAPPING CREATION ===
+Creating file mapping at /home/joepaley/projects/deemixer/downloads/1744584249336/file_mapping.json
+SUCCESS: Created file mapping with 1 entries
+
+=== FILES WITH METADATA ===
+File 1:
+  Name: J.J. Johnson - Blues Waltz.mp3
+  URL: /download/file/1744584249336/track_1.mp3
+  Original Path: J.J. Johnson - Blues Waltz.mp3
+  Actual Path: J.J. Johnson - Blues Waltz.mp3
+  Size: 19698797 bytes
+  Type: audio/mp3
+  Simple ID: track_1.mp3
+  Exists: true
+Using files from metadata
+File from metadata: {"name":"J.J. Johnson - Blues Waltz.mp3","url":"/download/file/1744584249336/track_1.mp3","originalPath":"J.J. Johnson - Blues Waltz.mp3","actualPath":"J.J. Johnson - Blues Waltz.mp3","size":19698797,"type":"audio/mp3","simpleId":"track_1.mp3","exists":true}
+Created URL for file: /download/file/1744584249336/J.J.%20Johnson%20-%20Blues%20Waltz.mp3
+Final file URLs to send to client: [
+  {
+    name: 'J.J. Johnson - Blues Waltz.mp3',
+    url: '/download/file/1744584249336/J.J.%20Johnson%20-%20Blues%20Waltz.mp3',
+    originalPath: 'J.J. Johnson - Blues Waltz.mp3',
+    actualPath: 'J.J. Johnson - Blues Waltz.mp3',
+    size: 19698797,
+    type: 'audio/mp3',
+    simpleId: 'track_1.mp3',
+    exists: true
+  }
+]
+Found 1 audio files in download directory to match against music directory
+Found 1 matching music files in music directory
+Final file URLs to send to client: [{"name":"J.J. Johnson - Blues Waltz.mp3","url":"/download/file/1744584249336/J.J.%20Johnson%20-%20Blues%20Waltz.mp3","originalPath":"J.J. Johnson - Blues Waltz.mp3","actualPath":"J.J. Johnson - Blues Waltz.mp3","size":19698797,"type":"audio/mp3","simpleId":"track_1.mp3","exists":true},{"name":"J.J. Johnson - Blues Waltz.mp3","path":"J.J. Johnson - Blues Waltz.mp3","url":"/download/file/music/J.J.%20Johnson%20-%20Blues%20Waltz.mp3","location":"music","source":"current_download"}]
+Final file count: 2
+Download buttons HTML generated: Yes
+Python stdout: Downloading from Deezer: https://www.deezer.com/us/track/2653095?host=5746063391&utm_campaign=clipboard-generic&utm_source=user_sharing&utm_content=track-2653095&deferredFl=1
+Default download location: /home/joepaley/projects/deemixer/music
+Running command: cat /home/joepaley/projects/deemixer/downloads/1744584249261/arl_temp.txt | /home/joepaley/projects/deemixer/deemix-env/bin/deemix -b 320 https://www.deezer.com/us/track/2653095?host=5746063391&utm_campaign=clipboard-generic&utm_source=user_sharing&utm_content=track-2653095&deferredFl=1
+
+=== FILE DISCOVERY PROCESS ===
+[2025-04-13T15:44:14.492482] Searching for downloaded files
+Default download location: /home/joepaley/projects/deemixer/music
+Output path: /home/joepaley/projects/deemixer/downloads/1744584249261
+
+=== DEEMIX OUTPUT ANALYSIS ===
+Analyzing deemix output for file information
+
+=== FILE COPYING PROCESS ===
+[2025-04-13T15:44:14.492565] Preparing to copy files to output directory
+SUCCESS: Found 1 files to copy
+
+File 1: J.J. Johnson - Blues Waltz.mp3
+  Full path: /home/joepaley/projects/deemixer/music/J.J. Johnson - Blues Waltz.mp3
+  Size: 19698797 bytes (18.79 MB)
+  Last modified: 2025-04-13T15:41:37.957884
+  Is readable: True
+  Destination: /home/joepaley/projects/deemixer/downloads/1744584249261/J.J. Johnson - Blues Waltz.mp3
+  Copying file...
+  SUCCESS: File copied successfully
+  Destination size: 19698797 bytes
+[track_2653095_3] J.J. Johnson - Blues Waltz :: Getting tags.
+[track_2653095_3] J.J. Johnson - Blues Waltz :: Tags got.
+[track_2653095_3] J.J. Johnson - Blues Waltz :: Getting download URL.
+[track_2653095_3] J.J. Johnson - Blues Waltz :: Download URL got.
+[track_2653095_3] J.J. Johnson - Blues Waltz :: Downloading album art.
+[track_2653095_3] J.J. Johnson - Blues Waltz :: Album art downloaded.
+[track_2653095_3] J.J. Johnson - Blues Waltz :: Track already downloaded.
+[track_2653095_3] Download at 100%
+[track_2653095_3] Completed download of /J.J. Johnson - Blues Waltz.mp3
+[track_2653095_3] Finished downloading
+All done!
+
+Checking output directory for audio files: /home/joepaley/projects/deemixer/downloads/1744584249261
+Walking directory: /home/joepaley/projects/deemixer/downloads/1744584249261
+Found files: ['download_started.txt', 'J.J. Johnson - Blues Waltz.mp3']
+Non-audio file: download_started.txt
+Found audio file: J.J. Johnson - Blues Waltz.mp3
+All files in output directory: ['/home/joepaley/projects/deemixer/downloads/1744584249261/download_started.txt', '/home/joepaley/projects/deemixer/downloads/1744584249261/J.J. Johnson - Blues Waltz.mp3']
+Audio files in output directory: ['/home/joepaley/projects/deemixer/downloads/1744584249261/J.J. Johnson - Blues Waltz.mp3']
+Downloaded 1 audio files:
+  - /home/joepaley/projects/deemixer/downloads/1744584249261/J.J. Johnson - Blues Waltz.mp3 (18.79 MB)
+
+=== METADATA GENERATION ===
+[2025-04-13T15:44:14.502062] Generating metadata for 1 audio files
+Metadata file will be created at: /home/joepaley/projects/deemixer/downloads/1744584249261/files.json
+File 1:
+  Full path: /home/joepaley/projects/deemixer/downloads/1744584249261/J.J. Johnson - Blues Waltz.mp3
+  Basename: J.J. Johnson - Blues Waltz.mp3
+  Size: 19698797 bytes (18.79 MB)
+  Extension: mp3
+  MIME type: audio/mp3
+  File is readable: Yes
+
+Creating files.json with the following content:
+{
+  "files": [
+    {
+      "path": "J.J. Johnson - Blues Waltz.mp3",
+      "size": 19698797,
+      "type": "audio/mp3",
+      "readable": true
+    }
+  ]
+}
+SUCCESS: files.json created successfully at /home/joepaley/projects/deemixer/downloads/1744584249261/files.json
+
+Verification - files.json content:
+{
+  "files": [
+    {
+      "path": "J.J. Johnson - Blues Waltz.mp3",
+      "size": 19698797,
+      "type": "audio/mp3",
+      "readable": true
+    }
+  ]
+}
+JSON validation: Success - parsed 1 file entries
+Download completed successfully
+
+Python process exited with code 0
+Download completed to /home/joepaley/projects/deemixer/downloads/1744584249261
+
+=== DOWNLOAD STATUS CHECK ===
+[2025-04-13T22:44:16.946Z] Checking download status for ID: 1744584249336
+Download path: /home/joepaley/projects/deemixer/downloads/1744584249336
+SUCCESS: Download directory exists: /home/joepaley/projects/deemixer/downloads/1744584249336
+Ensuring file mapping exists for download 1744584249336...
+Directory contents for 1744584249336:
+  1. J.J. Johnson - Blues Waltz.mp3 (19237.11 KB) - File
+  2. download_complete.txt (0.21 KB) - File
+  3. download_started.txt (0.18 KB) - File
+  4. file_mapping.json (0.19 KB) - File
+  5. files.json (0.15 KB) - File
+
+=== FILE PROCESSING ===
+Found 5 files in directory 1744584249336
+SUCCESS: Files found in directory 1744584249336
+  1. J.J. Johnson - Blues Waltz.mp3 (19237.11 KB) - Extension: .mp3
+  2. download_complete.txt (0.21 KB) - Extension: .txt
+  3. download_started.txt (0.18 KB) - Extension: .txt
+  4. file_mapping.json (0.19 KB) - Extension: .json
+  5. files.json (0.15 KB) - Extension: .json
+
+=== FILE ANALYSIS ===
+Processing completed download for 1744584249336
+Found 2 media files after filtering: [ 'J.J. Johnson - Blues Waltz.mp3', 'file_mapping.json' ]
+
+=== METADATA PROCESSING ===
+Checking for files.json at: /home/joepaley/projects/deemixer/downloads/1744584249336/files.json
+SUCCESS: files.json exists at /home/joepaley/projects/deemixer/downloads/1744584249336/files.json
+files.json content (first 100 chars): {
+  "files": [
+    {
+      "path": "J.J. Johnson - Blues Waltz.mp3",
+      "size": 19698797,
+      "...
+SUCCESS: Parsed files.json successfully
+filesData structure: object
+filesData keys: files
+filesData.files is an array: true
+filesData.files length: 1
+First file in metadata:
+  - Keys: path, size, type, readable
+  - path: J.J. Johnson - Blues Waltz.mp3
+  - size: 19698797
+  - type: audio/mp3
+
+=== FILE URL GENERATION ===
+Processing 1 files from metadata
+
+Processing file 1:
+  Original path: J.J. Johnson - Blues Waltz.mp3
+  File extension: mp3
+  Generated simple ID: track_1.mp3
+  Generated URL: /download/file/1744584249336/track_1.mp3
+  File exists at /home/joepaley/projects/deemixer/downloads/1744584249336/J.J. Johnson - Blues Waltz.mp3: true
+
+=== FILE MAPPING CREATION ===
+Creating file mapping at /home/joepaley/projects/deemixer/downloads/1744584249336/file_mapping.json
+SUCCESS: Created file mapping with 1 entries
+
+=== FILES WITH METADATA ===
+File 1:
+  Name: J.J. Johnson - Blues Waltz.mp3
+  URL: /download/file/1744584249336/track_1.mp3
+  Original Path: J.J. Johnson - Blues Waltz.mp3
+  Actual Path: J.J. Johnson - Blues Waltz.mp3
+  Size: 19698797 bytes
+  Type: audio/mp3
+  Simple ID: track_1.mp3
+  Exists: true
+Using files from metadata
+File from metadata: {"name":"J.J. Johnson - Blues Waltz.mp3","url":"/download/file/1744584249336/track_1.mp3","originalPath":"J.J. Johnson - Blues Waltz.mp3","actualPath":"J.J. Johnson - Blues Waltz.mp3","size":19698797,"type":"audio/mp3","simpleId":"track_1.mp3","exists":true}
+Created URL for file: /download/file/1744584249336/J.J.%20Johnson%20-%20Blues%20Waltz.mp3
+Final file URLs to send to client: [
+  {
+    name: 'J.J. Johnson - Blues Waltz.mp3',
+    url: '/download/file/1744584249336/J.J.%20Johnson%20-%20Blues%20Waltz.mp3',
+    originalPath: 'J.J. Johnson - Blues Waltz.mp3',
+    actualPath: 'J.J. Johnson - Blues Waltz.mp3',
+    size: 19698797,
+    type: 'audio/mp3',
+    simpleId: 'track_1.mp3',
+    exists: true
+  }
+]
+Found 1 audio files in download directory to match against music directory
+Found 1 matching music files in music directory
+Final file URLs to send to client: [{"name":"J.J. Johnson - Blues Waltz.mp3","url":"/download/file/1744584249336/J.J.%20Johnson%20-%20Blues%20Waltz.mp3","originalPath":"J.J. Johnson - Blues Waltz.mp3","actualPath":"J.J. Johnson - Blues Waltz.mp3","size":19698797,"type":"audio/mp3","simpleId":"track_1.mp3","exists":true},{"name":"J.J. Johnson - Blues Waltz.mp3","path":"J.J. Johnson - Blues Waltz.mp3","url":"/download/file/music/J.J.%20Johnson%20-%20Blues%20Waltz.mp3","location":"music","source":"current_download"}]
+Final file count: 2
+Download buttons HTML generated: Yes

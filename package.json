@@ -17,6 +17,7 @@
     "jest": "^29.7.0",
     "spotifydl-core": "^0.2.0",
     "supertest": "^7.1.0",
+    "youtube-dl-exec": "^3.0.20",
     "ytdl-core": "^4.11.5"
   }
 }

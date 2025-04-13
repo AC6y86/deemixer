@@ -1,10 +1,10 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
-const ytdl = require('ytdl-core');
 const fs = require('fs');
 const { exec } = require('child_process');
 const Spotify = require('spotifydl-core').default;
+const youtubeDl = require('youtube-dl-exec');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -40,6 +40,9 @@ app.get('/download/status/:downloadId', (req, res) => {
       return res.json({ status: 'in_progress', message: 'Download in progress' });
     } else {
       // Files exist, download is complete
+      // Log the files found for debugging
+      console.log(`Found ${files.length} files in download directory ${downloadPath}:`, files);
+      
       return res.json({ 
         status: 'complete', 
         message: 'Download complete', 
@@ -61,6 +64,10 @@ app.get('/download/file/:downloadId/:filename', (req, res) => {
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ error: 'File not found' });
   }
+  
+  // Set headers to force download
+  res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(decodeURIComponent(filename))}"`); 
+  res.setHeader('Content-Type', 'application/octet-stream');
   
   // Send the file
   res.download(filePath, decodeURIComponent(filename), (err) => {
@@ -88,6 +95,11 @@ const isDeezerUrl = (url) => {
   return url.includes('deezer.com');
 };
 
+// Helper function to check if a URL is from YouTube
+const isYouTubeUrl = (url) => {
+  return url.includes('youtube.com') || url.includes('youtu.be');
+};
+
 // API endpoint to handle download requests
 app.post('/download', async (req, res) => {
   try {
@@ -101,25 +113,69 @@ app.post('/download', async (req, res) => {
     ensureDownloadsDir();
 
     // Check if URL is from YouTube
-    if (ytdl.validateURL(url)) {
-      // Get video info
-      const info = await ytdl.getInfo(url);
-      const videoTitle = info.videoDetails.title.replace(/[^\w\s]/gi, '');
-      const videoPath = path.join(__dirname, 'downloads', `${videoTitle}.mp4`);
-      
-      // Download the video
-      ytdl(url, { quality: 'highest' })
-        .pipe(fs.createWriteStream(videoPath))
-        .on('finish', () => {
-          // Send the file to the client
-          res.download(videoPath, `${videoTitle}.mp4`, (err) => {
-            if (err) {
-              console.error('Error sending file:', err);
-            }
-            // Optionally delete the file after sending
-            // fs.unlinkSync(videoPath);
-          });
+    if (isYouTubeUrl(url)) {
+      try {
+        // Create a unique download ID and path
+        const downloadId = Date.now().toString();
+        const outputDir = path.join(__dirname, 'downloads', downloadId);
+        
+        // Ensure the output directory exists
+        if (!fs.existsSync(outputDir)) {
+          fs.mkdirSync(outputDir, { recursive: true });
+        }
+        
+        // Generate a safe filename
+        const safeFilename = `video-${downloadId}.mp4`;
+        const outputPath = path.join(outputDir, safeFilename);
+        
+        // Send a response to inform the client that the download has started
+        res.status(202).json({ 
+          message: 'YouTube download started. This may take a while depending on the video length.', 
+          downloadId: downloadId,
+          statusUrl: `/download/status/${downloadId}`,
+          autoCheckStatus: true
         });
+        
+        // Download the video using youtube-dl-exec
+        (async () => {
+          try {
+            // Use a more reliable output template that youtube-dl-exec understands
+            await youtubeDl(url, {
+              // Use the download directory but let youtube-dl name the file
+              // This will include the video title in the filename
+              output: path.join(outputDir, '%(title)s.%(ext)s'),
+              format: 'best[ext=mp4]',
+              noCheckCertificate: true,
+              noWarnings: true,
+              preferFreeFormats: true,
+              addHeader: [
+                'referer:youtube.com',
+                'user-agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+              ]
+            });
+            
+            // Log the directory contents after download
+            fs.readdir(outputDir, (err, files) => {
+              if (err) {
+                console.error('Error reading download directory:', err);
+              } else {
+                console.log(`Files in download directory after download:`, files);
+              }
+            });
+            
+            console.log(`Download completed to ${outputPath}`);
+            
+            // We don't send the file here since we've already sent a 202 response
+            // The client will need to poll for the download status or use WebSockets
+            // for real-time updates
+          } catch (error) {
+            console.error('Error downloading from YouTube:', error);
+          }
+        })();
+      } catch (error) {
+        console.error('Error setting up YouTube download:', error);
+        return res.status(500).json({ error: 'Failed to set up YouTube download' });
+      }
     } 
     // Check if URL is from Spotify
     else if (isSpotifyUrl(url)) {
@@ -147,7 +203,9 @@ app.post('/download', async (req, res) => {
         // Send a response to inform the client that the download has started
         res.status(202).json({ 
           message: 'Spotify download started. This may take a while depending on the content.', 
-          downloadId: downloadId 
+          downloadId: downloadId,
+          statusUrl: `/download/status/${downloadId}`,
+          autoCheckStatus: true
         });
         
         // Download the Spotify track/album/playlist

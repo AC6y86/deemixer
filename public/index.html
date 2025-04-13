@@ -98,6 +98,26 @@
             background-color: #f8d7da;
             color: #721c24;
         }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .download-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 8px 15px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .download-link:hover {
+            background-color: #2980b9;
+        }
+        #downloadFiles {
+            margin-top: 15px;
+        }
         .loading {
             text-align: center;
             display: none;
@@ -176,35 +196,45 @@
                 // Hide loading
                 loading.style.display = 'none';
                 
-                const responseData = await response.json();
-                
                 // Handle different response types based on status code
                 if (response.status === 202) {
-                    // This is an asynchronous download (like Spotify)
+                    // This is an asynchronous download
+                    const responseData = await response.json();
                     const downloadId = responseData.downloadId;
                     
                     // Show status message
-                    status.textContent = responseData.message || 'Download started. Please wait...';
+                    status.innerHTML = `
+                        <p>${responseData.message || 'Download started. Please wait...'}</p>
+                        <div id="downloadProgress">Checking download status...</div>
+                        <div id="downloadFiles"></div>
+                    `;
                     status.className = 'status success';
                     status.style.display = 'block';
                     
-                    // In a future version, we could implement polling to check download status
-                    // or use WebSockets for real-time updates
-                    
-                } else if (response.status === 200) {
-                    // This is a direct download with a file (like YouTube)
-                    // For now, we'll show a message that the user needs to use the download endpoint directly
-                    status.textContent = 'Download ready! Please use the direct download link.';
-                    status.className = 'status success';
-                    status.style.display = 'block';
-                    
-                    // In a future version, we'll implement direct file downloads here
+                    // Start polling for download status if auto-check is enabled
+                    if (responseData.autoCheckStatus) {
+                        pollDownloadStatus(downloadId);
+                    }
                     
                 } else if (response.status >= 400) {
                     // Error response
+                    const responseData = await response.json();
                     status.textContent = responseData.error || 'An error occurred during download.';
                     status.className = 'status error';
                     status.style.display = 'block';
+                } else {
+                    // For any other response, try to parse as JSON first
+                    try {
+                        const responseData = await response.json();
+                        status.textContent = responseData.message || 'Unknown response from server.';
+                        status.className = 'status info';
+                        status.style.display = 'block';
+                    } catch (e) {
+                        // If not JSON, it might be a direct file download
+                        status.textContent = 'Download completed successfully!';
+                        status.className = 'status success';
+                        status.style.display = 'block';
+                    }
                 }
             } catch (error) {
                 // Hide loading
@@ -218,12 +248,56 @@
             }
         });
         
-        // Function to check download status (for future implementation)
+        // Function to poll download status until complete
+        async function pollDownloadStatus(downloadId) {
+            const progressElement = document.getElementById('downloadProgress');
+            const filesElement = document.getElementById('downloadFiles');
+            
+            // Poll every 2 seconds
+            const pollInterval = setInterval(async () => {
+                try {
+                    const data = await checkDownloadStatus(downloadId);
+                    
+                    if (data.status === 'complete') {
+                        // Download is complete, show download links
+                        clearInterval(pollInterval);
+                        progressElement.textContent = 'Download complete! Click below to download your files:';
+                        
+                        // Create download links for each file
+                        filesElement.innerHTML = '';
+                        data.files.forEach(file => {
+                            const downloadLink = document.createElement('a');
+                            downloadLink.href = file.url;
+                            downloadLink.className = 'download-link';
+                            downloadLink.textContent = file.name;
+                            downloadLink.setAttribute('download', file.name);
+                            filesElement.appendChild(downloadLink);
+                            filesElement.appendChild(document.createElement('br'));
+                        });
+                    } else if (data.status === 'in_progress') {
+                        // Download still in progress
+                        progressElement.textContent = 'Download in progress... Please wait.';
+                    } else if (data.status === 'error') {
+                        // Error occurred
+                        clearInterval(pollInterval);
+                        progressElement.textContent = 'Error: ' + data.message;
+                    } else if (data.status === 'not_found') {
+                        // Download not found
+                        clearInterval(pollInterval);
+                        progressElement.textContent = 'Download not found. It may have been removed.';
+                    }
+                } catch (error) {
+                    console.error('Error polling download status:', error);
+                    progressElement.textContent = 'Error checking download status. Please try again later.';
+                }
+            }, 2000);
+        }
+        
+        // Function to check download status
         async function checkDownloadStatus(downloadId) {
             try {
                 const response = await fetch(`/download/status/${downloadId}`);
                 const data = await response.json();
-                
                 return data;
             } catch (error) {
                 console.error('Error checking download status:', error);

@@ -302,33 +302,245 @@
                     if (data.status === 'complete') {
                         // Download is complete, show download links
                         clearInterval(pollInterval);
-                        progressElement.textContent = 'Download complete! Click below to download your files:';
+                        // Check if we have any media files to display
+                        const hasMediaFiles = data.files.some(file => {
+                            const filename = file.name.toLowerCase();
+                            return (
+                                filename.endsWith('.mp3') || 
+                                filename.endsWith('.mp4') || 
+                                filename.endsWith('.flac') || 
+                                filename.endsWith('.wav') ||
+                                (file.type && file.type.startsWith('audio/'))
+                            );
+                        });
+                        
+                        if (hasMediaFiles) {
+                            progressElement.textContent = 'Download complete! Click below to download your files:';
+                        } else {
+                            progressElement.textContent = 'Download processing completed. Looking for available files...';
+                        }
                         
                         // Create download links for each file
                         filesElement.innerHTML = '';
                         
+                        // Add debugging information
+                        console.log('Files received from server:', data.files);
+                        
                         // Separate media files from text files
-                        const mediaFiles = data.files.filter(file => 
-                            !file.name.endsWith('.txt') && 
-                            !file.name.endsWith('_error.txt') && 
-                            !file.name.endsWith('_info.txt'));
+                        const mediaFiles = data.files.filter(file => {
+                            // Handle potential undefined or null file
+                            if (!file) {
+                                console.log(`Invalid file object: null or undefined`);
+                                return false;
+                            }
                             
-                        const textFiles = data.files.filter(file => 
-                            file.name.endsWith('.txt') || 
-                            file.name.endsWith('_error.txt') || 
-                            file.name.endsWith('_info.txt'));
+                            console.log(`Filtering file:`, file);
+                            
+                            // Check for different property combinations that indicate a media file
+                            // Case 1: Standard file with name property
+                            if (file.name) {
+                                const filename = file.name.toLowerCase();
+                                console.log(`  - Has name property: ${filename}`);
+                                
+                                // Check if it's a media file by extension
+                                const isMediaByExtension = (
+                                    filename.endsWith('.mp3') || 
+                                    filename.endsWith('.mp4') || 
+                                    filename.endsWith('.flac') || 
+                                    filename.endsWith('.wav')
+                                );
+                                
+                                // Check if it's a media file by MIME type
+                                const isMediaByType = (file.type && file.type.startsWith('audio/'));
+                                
+                                if (isMediaByExtension || isMediaByType) {
+                                    console.log(`  - MATCH: Media file by name/type`);
+                                    return true;
+                                }
+                            }
+                            
+                            // Case 2: File from metadata (files.json) with path property
+                            if (file.path) {
+                                const path = file.path.toLowerCase();
+                                console.log(`  - Has path property: ${path}`);
+                                
+                                // Check if it's a media file by extension
+                                const isMediaByPathExtension = (
+                                    path.endsWith('.mp3') || 
+                                    path.endsWith('.mp4') || 
+                                    path.endsWith('.flac') || 
+                                    path.endsWith('.wav')
+                                );
+                                
+                                // Check if it's a media file by MIME type
+                                const isMediaByType = (file.type && file.type.startsWith('audio/'));
+                                
+                                if (isMediaByPathExtension || isMediaByType) {
+                                    console.log(`  - MATCH: Media file by path/type`);
+                                    return true;
+                                }
+                            }
+                            
+                            // Case 3: File has a MIME type that indicates audio
+                            if (file.type && file.type.startsWith('audio/')) {
+                                console.log(`  - MATCH: Media file by type only: ${file.type}`);
+                                return true;
+                            }
+                            
+                            // Case 4: File has originalPath or actualPath (from our mapping system)
+                            if (file.originalPath) {
+                                const path = file.originalPath.toLowerCase();
+                                console.log(`  - Has originalPath property: ${path}`);
+                                
+                                if (path.endsWith('.mp3') || path.endsWith('.flac') || path.endsWith('.wav')) {
+                                    console.log(`  - MATCH: Media file by originalPath`);
+                                    return true;
+                                }
+                            }
+                            
+                            if (file.actualPath) {
+                                const path = file.actualPath.toLowerCase();
+                                console.log(`  - Has actualPath property: ${path}`);
+                                
+                                if (path.endsWith('.mp3') || path.endsWith('.flac') || path.endsWith('.wav')) {
+                                    console.log(`  - MATCH: Media file by actualPath`);
+                                    return true;
+                                }
+                            }
+                            
+                            // Case 5: File has simpleId that indicates it's from our mapping system
+                            if (file.simpleId && file.simpleId.toLowerCase().endsWith('.mp3')) {
+                                console.log(`  - MATCH: Media file by simpleId: ${file.simpleId}`);
+                                return true;
+                            }
+                            
+                            console.log(`  - NOT A MATCH: Not detected as media file`);
+                            return false;
+                        });
+                            
+                        const textFiles = data.files.filter(file => {
+                            const filename = file.name.toLowerCase();
+                            return (
+                                filename.endsWith('.txt') || 
+                                filename.endsWith('.log') ||
+                                filename === 'files.json' ||
+                                filename.includes('error') ||
+                                filename.includes('info')
+                            );
+                        });
                         
                         // Display media files first
+                        console.log('Media files to display:', mediaFiles);
+                        console.log('All files from server:', data.files);
+                        
+                        // Detailed inspection of each file
+                        if (data.files && data.files.length > 0) {
+                            data.files.forEach(file => {
+                                console.log(`Analyzing file: ${file.name}`);
+                                console.log(`  - URL: ${file.url}`);
+                                console.log(`  - Type: ${file.type || 'unknown'}`);
+                                console.log(`  - Size: ${file.size || 'unknown'}`);
+                                console.log(`  - Is media file: ${mediaFiles.includes(file)}`);
+                                
+                                // Check why it might not be detected as a media file
+                                const filename = file.name ? file.name.toLowerCase() : '';
+                                console.log(`  - Ends with .mp3: ${filename.endsWith('.mp3')}`);
+                                console.log(`  - Ends with .mp4: ${filename.endsWith('.mp4')}`);
+                                console.log(`  - Ends with .flac: ${filename.endsWith('.flac')}`);
+                                console.log(`  - Ends with .wav: ${filename.endsWith('.wav')}`);
+                                console.log(`  - Has audio MIME type: ${file.type && file.type.startsWith('audio/')}`);
+                            });
+                        }
+                        
+                        // Update the files element based on what we found
                         if (mediaFiles.length > 0) {
+                            console.log(`Found ${mediaFiles.length} media files to display`);
+                            // Clear the "No files available" message
+                            filesElement.innerHTML = '';
+                            
+                            console.log('Displaying media files');
                             mediaFiles.forEach(file => {
                                 const downloadLink = document.createElement('a');
                                 downloadLink.href = file.url;
                                 downloadLink.className = 'download-link';
-                                downloadLink.textContent = file.name;
-                                downloadLink.setAttribute('download', file.name);
+                                
+                                // Use the most appropriate name available
+                                // Priority: path > name > originalPath > actualPath > simpleId
+                                let displayName = '';
+                                if (file.path) {
+                                    displayName = file.path;
+                                    console.log(`Using path as display name: ${displayName}`);
+                                } else if (file.name) {
+                                    displayName = file.name;
+                                    console.log(`Using name as display name: ${displayName}`);
+                                } else if (file.originalPath) {
+                                    displayName = file.originalPath;
+                                    console.log(`Using originalPath as display name: ${displayName}`);
+                                } else if (file.actualPath) {
+                                    displayName = file.actualPath;
+                                    console.log(`Using actualPath as display name: ${displayName}`);
+                                } else if (file.simpleId) {
+                                    // Convert simpleId like track_1.mp3 to a more user-friendly name
+                                    displayName = `Track ${file.simpleId.split('_')[1]}`;
+                                    console.log(`Using simpleId as display name: ${displayName}`);
+                                } else {
+                                    displayName = 'Audio File';
+                                    console.log(`Using default display name`);
+                                }
+                                
+                                downloadLink.textContent = displayName;
+                                downloadLink.setAttribute('download', displayName);
+                                
+                                // Add file size if available
+                                if (file.size) {
+                                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                                    downloadLink.textContent += ` (${sizeMB} MB)`;
+                                }
+                                
                                 filesElement.appendChild(downloadLink);
                                 filesElement.appendChild(document.createElement('br'));
                             });
+                        } else if (data.files && data.files.length > 0) {
+                            console.log('No media files detected, falling back to showing all non-text files');
+                            // If no media files were detected but we have files, show all non-text files
+                            console.log('No media files detected, showing all non-text files');
+                            
+                            const nonTextFiles = data.files.filter(file => {
+                                const filename = file.name.toLowerCase();
+                                return !(
+                                    filename.endsWith('.txt') || 
+                                    filename === 'files.json' || 
+                                    filename.includes('error') || 
+                                    filename.includes('info')
+                                );
+                            });
+                            
+                            if (nonTextFiles.length > 0) {
+                                nonTextFiles.forEach(file => {
+                                    const downloadLink = document.createElement('a');
+                                    downloadLink.href = file.url;
+                                    downloadLink.className = 'download-link';
+                                    downloadLink.textContent = file.name;
+                                    downloadLink.setAttribute('download', file.name);
+                                    filesElement.appendChild(downloadLink);
+                                    filesElement.appendChild(document.createElement('br'));
+                                });
+                            } else {
+                                filesElement.innerHTML = `
+                                    <div class="error-message">
+                                        <p><strong>No downloadable files found.</strong></p>
+                                        <p>This could be due to one of the following reasons:</p>
+                                        <ul>
+                                            <li>The track is not available for download on Deezer</li>
+                                            <li>Your Deezer ARL token may not have sufficient permissions</li>
+                                            <li>The track may be region-restricted</li>
+                                        </ul>
+                                        <p>Try another track or check your ARL token.</p>
+                                    </div>
+                                `;
+                            }
+                        } else {
+                            filesElement.innerHTML = '<p>No files available for download.</p>';
                         }
                         
                         // If there are text files (likely error or info files), show them separately
@@ -413,8 +625,10 @@ DEEZER_ARL=your_arl_token_here</pre>
         // Function to check download status
         async function checkDownloadStatus(downloadId) {
             try {
+                console.log(`Checking download status for ID: ${downloadId}`);
                 const response = await fetch(`/download/status/${downloadId}`);
                 const data = await response.json();
+                console.log(`Download status response:`, data);
                 return data;
             } catch (error) {
                 console.error('Error checking download status:', error);

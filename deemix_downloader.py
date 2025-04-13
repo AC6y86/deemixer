@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+
 DeeMixer Downloader Script
 --------------------------
 This script handles downloading from Deezer and converting Spotify URLs to Deezer URLs.
@@ -15,6 +16,7 @@ import subprocess
 import time
 from pathlib import Path
 import requests
+from datetime import datetime
 # Import only what we need for the CLI approach
 from deezer import Deezer
 
@@ -213,25 +215,157 @@ def download_from_deezer(url, output_path, arl):
         stdout, stderr = process.communicate()
         
         # After download completes, copy any downloaded files to our output directory
-        print("Checking for downloaded files in the default location...")
-        audio_files = []
-        for root, dirs, files in os.walk(default_download_location):
-            for file in files:
-                if file.endswith('.mp3') or file.endswith('.flac'):
-                    # Check if this is a recent file (created in the last minute)
-                    file_path = os.path.join(root, file)
-                    file_creation_time = os.path.getctime(file_path)
-                    if time.time() - file_creation_time < 60:  # If file was created in the last minute
-                        audio_files.append(file_path)
+        print("\n=== FILE DISCOVERY PROCESS ===")
+        print(f"[{datetime.now().isoformat()}] Searching for downloaded files")
+        print(f"Default download location: {default_download_location}")
+        print(f"Output path: {output_path}")
         
-        if audio_files:
-            print(f"Found {len(audio_files)} recently downloaded audio files")
-            for src_file in audio_files:
-                # Copy the file to our output directory
-                dest_file = os.path.join(output_path, os.path.basename(src_file))
-                print(f"Copying {src_file} to {dest_file}")
-                import shutil
-                shutil.copy2(src_file, dest_file)
+        # First, check if the deemix output indicates a successful download
+        # Look for patterns like "Completed download of" or "Track already downloaded"
+        downloaded_files = []
+        track_info = {}
+        
+        print("\n=== DEEMIX OUTPUT ANALYSIS ===")
+        print(f"Analyzing deemix output for file information")
+        
+        # Extract track information from output
+        for line in stdout.split('\n'):
+            # Look for track title and artist information
+            if '::' in line and '[track_' in line:
+                parts = line.split('::')[0].strip()
+                track_id_parts = parts.split(']')
+                if len(track_id_parts) > 1:
+                    track_info['track_name'] = track_id_parts[1].strip()
+            
+            # Look for completed or already downloaded tracks
+            if "Completed download of" in line or "Track already downloaded" in line:
+                # Extract the filename from the output
+                # Format is typically: [track_id] Completed download of /Artist - Title.mp3
+                parts = line.split('Completed download of')
+                if len(parts) > 1:
+                    filename = parts[1].strip().strip('/')
+                    # Look for this file in the default download location
+                    for root, dirs, files in os.walk(default_download_location):
+                        for file in files:
+                            if file == filename or file.endswith(filename):
+                                downloaded_files.append(os.path.join(root, file))
+        
+        # If we couldn't find files based on the output, fall back to checking for recent files
+        if not downloaded_files:
+            for root, dirs, files in os.walk(default_download_location):
+                for file in files:
+                    if file.endswith('.mp3') or file.endswith('.flac'):
+                        # Check if this is a recent file (created in the last minute)
+                        file_path = os.path.join(root, file)
+                        file_creation_time = os.path.getctime(file_path)
+                        if time.time() - file_creation_time < 60:  # If file was created in the last minute
+                            downloaded_files.append(file_path)
+        
+        # If we still couldn't find any files, try to use the extracted track info
+        # to search for matching files in the default location
+        if not downloaded_files and track_info.get('track_name'):
+            track_name = track_info['track_name']
+            print(f"Searching for files matching track: {track_name}")
+            
+            # Search for files containing the track name
+            for root, dirs, files in os.walk(default_download_location):
+                for file in files:
+                    if track_name in file and (file.endswith('.mp3') or file.endswith('.flac')):
+                        print(f"Found matching file: {file}")
+                        downloaded_files.append(os.path.join(root, file))
+        
+        # As a last resort, look for any track ID or specific track names in the output
+        if not downloaded_files:
+            for line in stdout.split('\n'):
+                # Extract track ID from lines like [track_116914042_3]
+                if '[track_' in line and ']' in line:
+                    track_id = line.split('[track_')[1].split(']')[0].split('_')[0]
+                    print(f"Searching for files related to track ID: {track_id}")
+                    
+                    # Look for any recently modified audio files
+                    for root, dirs, files in os.walk(default_download_location):
+                        for file in files:
+                            if (file.endswith('.mp3') or file.endswith('.flac')):
+                                # Check if this is a relatively recent file (created in the last day)
+                                file_path = os.path.join(root, file)
+                                file_creation_time = os.path.getctime(file_path)
+                                if time.time() - file_creation_time < 86400:  # 24 hours
+                                    print(f"Found recent audio file: {file}")
+                                    downloaded_files.append(file_path)
+        
+        # Copy all found files to the output directory
+        print("\n=== FILE COPYING PROCESS ===")
+        print(f"[{datetime.now().isoformat()}] Preparing to copy files to output directory")
+        
+        if downloaded_files:
+            print(f"SUCCESS: Found {len(downloaded_files)} files to copy")
+            
+            # Log detailed information about each file
+            for index, src_file in enumerate(downloaded_files):
+                try:
+                    file_size = os.path.getsize(src_file)
+                    file_size_mb = file_size / (1024 * 1024)
+                    file_mtime = datetime.fromtimestamp(os.path.getmtime(src_file))
+                    file_readable = os.access(src_file, os.R_OK)
+                    
+                    print(f"\nFile {index + 1}: {os.path.basename(src_file)}")
+                    print(f"  Full path: {src_file}")
+                    print(f"  Size: {file_size} bytes ({file_size_mb:.2f} MB)")
+                    print(f"  Last modified: {file_mtime.isoformat()}")
+                    print(f"  Is readable: {file_readable}")
+                    
+                    # Copy the file to our output directory
+                    dest_file = os.path.join(output_path, os.path.basename(src_file))
+                    print(f"  Destination: {dest_file}")
+                    
+                    # Check if destination already exists
+                    if os.path.exists(dest_file):
+                        print(f"  WARNING: Destination file already exists, will be overwritten")
+                    
+                    # Perform the copy operation
+                    print(f"  Copying file...")
+                    import shutil
+                    shutil.copy2(src_file, dest_file)
+                    
+                    # Verify the copy was successful
+                    if os.path.exists(dest_file):
+                        dest_size = os.path.getsize(dest_file)
+                        print(f"  SUCCESS: File copied successfully")
+                        print(f"  Destination size: {dest_size} bytes")
+                        if dest_size != file_size:
+                            print(f"  WARNING: Source and destination file sizes don't match!")
+                    else:
+                        print(f"  ERROR: Copy operation failed - destination file does not exist")
+                        
+                except Exception as e:
+                    print(f"  ERROR: Exception during file copy process: {str(e)}")
+        else:
+            print("ERROR: No files found to copy. This could be because:")
+            print("1. The download failed")
+            print("2. The file was already downloaded but we couldn't locate it")
+            print("3. The deemix CLI output format has changed")
+            print("4. There might be permission issues accessing the files")
+            
+            # Check the default download directory to see if there are any audio files at all
+            print("\nPerforming emergency file scan in default download location...")
+            try:
+                audio_files = []
+                for root, dirs, files in os.walk(default_download_location):
+                    for file in files:
+                        if file.endswith('.mp3') or file.endswith('.flac'):
+                            audio_files.append(os.path.join(root, file))
+                
+                print(f"Found {len(audio_files)} total audio files in default location")
+                if audio_files:
+                    print("Most recent audio files:")
+                    # Sort by modification time, newest first
+                    audio_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+                    # Show the 5 most recent files
+                    for i, file in enumerate(audio_files[:5]):
+                        mtime = datetime.fromtimestamp(os.path.getmtime(file))
+                        print(f"  {i+1}. {os.path.basename(file)} - Modified: {mtime.isoformat()}")
+            except Exception as e:
+                print(f"ERROR: Failed to perform emergency file scan: {str(e)}")
         
         # Remove the temporary ARL file
         if os.path.exists(arl_file):
@@ -244,22 +378,102 @@ def download_from_deezer(url, output_path, arl):
         # Print the output for debugging
         print(stdout)
         
-        # Check if any audio files were downloaded
-        audio_files = []
-        for root, dirs, files in os.walk(output_path):
-            for file in files:
-                if file.endswith('.mp3') or file.endswith('.flac'):
-                    audio_files.append(os.path.join(root, file))
+        # After copying files, check what's in the output directory
+        print(f"Checking output directory for audio files: {output_path}")
+        output_audio_files = []
+        all_files = []
         
-        if not audio_files:
+        for root, dirs, files in os.walk(output_path):
+            print(f"Walking directory: {root}")
+            print(f"Found files: {files}")
+            for file in files:
+                all_files.append(os.path.join(root, file))
+                if file.endswith('.mp3') or file.endswith('.flac'):
+                    print(f"Found audio file: {file}")
+                    output_audio_files.append(os.path.join(root, file))
+                else:
+                    print(f"Non-audio file: {file}")
+        
+        print(f"All files in output directory: {all_files}")
+        print(f"Audio files in output directory: {output_audio_files}")
+        
+        if not output_audio_files:
             print("Warning: No audio files were found in the output directory.")
             # This might be a warning rather than an error, as the process completed successfully
             # but we should still check why no files were downloaded
+            return False
         else:
-            print(f"Downloaded {len(audio_files)} audio files:")
-            for file in audio_files:
+            print(f"Downloaded {len(output_audio_files)} audio files:")
+            for file in output_audio_files:
                 file_size_mb = os.path.getsize(file) / (1024 * 1024)
                 print(f"  - {file} ({file_size_mb:.2f} MB)")
+            
+            # Create a file list for the web server to use
+            print("\n=== METADATA GENERATION ===")
+            print(f"[{datetime.now().isoformat()}] Generating metadata for {len(output_audio_files)} audio files")
+            
+            files_list_path = os.path.join(output_path, "files.json")
+            print(f"Metadata file will be created at: {files_list_path}")
+            
+            # Create detailed file metadata
+            file_metadata = []
+            for index, file in enumerate(output_audio_files):
+                file_basename = os.path.basename(file)
+                file_size = os.path.getsize(file)
+                file_ext = os.path.splitext(file)[1][1:]
+                file_type = "audio/" + file_ext
+                
+                print(f"File {index + 1}:")
+                print(f"  Full path: {file}")
+                print(f"  Basename: {file_basename}")
+                print(f"  Size: {file_size} bytes ({file_size / (1024 * 1024):.2f} MB)")
+                print(f"  Extension: {file_ext}")
+                print(f"  MIME type: {file_type}")
+                
+                # Check if the file is readable
+                try:
+                    with open(file, 'rb') as f:
+                        # Just read a small chunk to verify the file is accessible
+                        f.read(1024)
+                    print(f"  File is readable: Yes")
+                    file_readable = True
+                except Exception as e:
+                    print(f"  File is readable: No - {str(e)}")
+                    file_readable = False
+                
+                file_metadata.append({
+                    "path": file_basename,
+                    "size": file_size,
+                    "type": file_type,
+                    "readable": file_readable
+                })
+            
+            files_data = {"files": file_metadata}
+            
+            print(f"\nCreating files.json with the following content:")
+            print(json.dumps(files_data, indent=2))
+            
+            try:
+                with open(files_list_path, "w") as f:
+                    json.dump(files_data, f, indent=2)
+                print(f"SUCCESS: files.json created successfully at {files_list_path}")
+            except Exception as e:
+                print(f"ERROR: Failed to create files.json: {str(e)}")
+            
+            # Verify the files.json was created correctly
+            if os.path.exists(files_list_path):
+                try:
+                    with open(files_list_path, 'r') as f:
+                        content = f.read()
+                        print(f"\nVerification - files.json content:")
+                        print(content)
+                        # Verify the JSON is valid
+                        parsed = json.loads(content)
+                        print(f"JSON validation: Success - parsed {len(parsed.get('files', []))} file entries")
+                except Exception as e:
+                    print(f"ERROR: files.json verification failed: {str(e)}")
+            else:
+                print(f"ERROR: files.json was not created at {files_list_path}")
         
         # Create a success file
         success_file = os.path.join(output_path, "download_complete.txt")

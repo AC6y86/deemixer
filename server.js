@@ -57,26 +57,178 @@ const isValidUrl = (url) => {
   }
 };
 
+// Helper function to ensure a file mapping exists for a download
+const ensureFileMapping = (downloadId) => {
+  const downloadPath = path.join(__dirname, 'downloads', downloadId);
+  const mappingPath = path.join(downloadPath, 'file_mapping.json');
+  
+  // Only create mapping if it doesn't exist
+  if (!fs.existsSync(mappingPath)) {
+    console.log(`\n=== CREATING FILE MAPPING FOR EXISTING DOWNLOAD ===`);
+    console.log(`Download ID: ${downloadId}`);
+    console.log(`Download path: ${downloadPath}`);
+    
+    // Check if the download directory exists
+    if (!fs.existsSync(downloadPath)) {
+      console.log(`ERROR: Download directory does not exist: ${downloadPath}`);
+      return false;
+    }
+    
+    // Look for files.json
+    const filesJsonPath = path.join(downloadPath, 'files.json');
+    if (!fs.existsSync(filesJsonPath)) {
+      console.log(`WARNING: files.json not found at ${filesJsonPath}`);
+      
+      // If no files.json, scan for audio files and create one
+      try {
+        const audioFiles = [];
+        const files = fs.readdirSync(downloadPath);
+        
+        for (const file of files) {
+          if (file.endsWith('.mp3') || file.endsWith('.flac') || file.endsWith('.m4a')) {
+            const filePath = path.join(downloadPath, file);
+            const stats = fs.statSync(filePath);
+            
+            audioFiles.push({
+              path: file,
+              size: stats.size,
+              type: 'audio/' + file.split('.').pop().toLowerCase()
+            });
+          }
+        }
+        
+        if (audioFiles.length > 0) {
+          console.log(`Found ${audioFiles.length} audio files, creating files.json`);
+          const filesData = { files: audioFiles };
+          fs.writeFileSync(filesJsonPath, JSON.stringify(filesData, null, 2));
+          console.log(`Created files.json with ${audioFiles.length} entries`);
+        } else {
+          console.log(`No audio files found in directory, cannot create mapping`);
+          return false;
+        }
+      } catch (err) {
+        console.error(`ERROR: Failed to scan directory: ${err.message}`);
+        return false;
+      }
+    }
+    
+    // Now read the files.json and create mapping
+    try {
+      const fileContent = fs.readFileSync(filesJsonPath, 'utf8');
+      const filesData = JSON.parse(fileContent);
+      
+      if (filesData && filesData.files && filesData.files.length > 0) {
+        // Create simplified IDs for each file
+        const fileMapping = {
+          files: filesData.files.map((fileInfo, index) => {
+            const fileExt = fileInfo.path.split('.').pop().toLowerCase();
+            const simpleId = `track_${index + 1}.${fileExt}`;
+            const fileExists = fs.existsSync(path.join(downloadPath, fileInfo.path));
+            
+            // Find actual file if original doesn't exist
+            let actualPath = fileInfo.path;
+            if (!fileExists) {
+              const files = fs.readdirSync(downloadPath);
+              const matchingFiles = files.filter(f => f.endsWith(`.${fileExt}`));
+              if (matchingFiles.length > 0) {
+                actualPath = matchingFiles[0];
+              }
+            }
+            
+            return {
+              simpleId: simpleId,
+              originalPath: fileInfo.path,
+              actualPath: actualPath,
+              exists: fileExists || actualPath !== fileInfo.path
+            };
+          })
+        };
+        
+        // Write the mapping file
+        fs.writeFileSync(mappingPath, JSON.stringify(fileMapping, null, 2));
+        console.log(`SUCCESS: Created file mapping with ${fileMapping.files.length} entries`);
+        return true;
+      } else {
+        console.log(`WARNING: No files found in files.json`);
+        return false;
+      }
+    } catch (err) {
+      console.error(`ERROR: Failed to create file mapping: ${err.message}`);
+      return false;
+    }
+  }
+  
+  return true; // Mapping already exists
+};
+
 // Endpoint to check download status
 app.get('/download/status/:downloadId', (req, res) => {
   const { downloadId } = req.params;
   const downloadPath = path.join(__dirname, 'downloads', downloadId);
   
+  console.log(`\n=== DOWNLOAD STATUS CHECK ===`);
+  console.log(`[${new Date().toISOString()}] Checking download status for ID: ${downloadId}`);
+  console.log(`Download path: ${downloadPath}`);
+  
   // Check if the download directory exists
   if (!fs.existsSync(downloadPath)) {
+    console.log(`ERROR: Download directory not found: ${downloadPath}`);
     return res.status(404).json({ status: 'not_found', message: 'Download not found' });
+  }
+  
+  console.log(`SUCCESS: Download directory exists: ${downloadPath}`);
+  
+  // Ensure file mapping exists for this download
+  console.log(`Ensuring file mapping exists for download ${downloadId}...`);
+  ensureFileMapping(downloadId);
+  
+  // Log the directory contents for debugging
+  try {
+    const dirContents = fs.readdirSync(downloadPath);
+    console.log(`Directory contents for ${downloadId}:`);
+    dirContents.forEach((file, index) => {
+      try {
+        const stats = fs.statSync(path.join(downloadPath, file));
+        const fileSizeKB = (stats.size / 1024).toFixed(2);
+        console.log(`  ${index + 1}. ${file} (${fileSizeKB} KB) - ${stats.isDirectory() ? 'Directory' : 'File'}`);
+      } catch (err) {
+        console.log(`  ${index + 1}. ${file} (Error getting stats: ${err.message})`);
+      }
+    });
+  } catch (err) {
+    console.error(`ERROR: Failed to read directory contents: ${err.message}`);
   }
   
   // List files in the download directory
   fs.readdir(downloadPath, (err, files) => {
     if (err) {
+      console.error(`ERROR: Failed to read directory: ${err.message}`);
       return res.status(500).json({ status: 'error', message: 'Failed to check download status' });
     }
     
+    console.log(`\n=== FILE PROCESSING ===`);
+    console.log(`Found ${files.length} files in directory ${downloadId}`);
+    
     if (files.length === 0) {
       // No files yet, download is still in progress
+      console.log(`WARNING: No files found in directory ${downloadId}, reporting as in progress`);
       return res.json({ status: 'in_progress', message: 'Download in progress' });
     } else {
+      console.log(`SUCCESS: Files found in directory ${downloadId}`);
+      
+      // Log each file with its details
+      files.forEach((file, index) => {
+        try {
+          const filePath = path.join(downloadPath, file);
+          const stats = fs.statSync(filePath);
+          const fileSizeKB = (stats.size / 1024).toFixed(2);
+          const fileExt = path.extname(file).toLowerCase();
+          console.log(`  ${index + 1}. ${file} (${fileSizeKB} KB) - Extension: ${fileExt || 'none'}`);
+        } catch (err) {
+          console.log(`  ${index + 1}. ${file} (Error getting stats: ${err.message})`);
+        }
+      });
+      console.log(`\n=== FILE ANALYSIS ===`);
       // Check if there's an error file
       const errorFile = files.find(file => file.includes('error') && file.endsWith('.txt'));
       if (errorFile) {
@@ -96,16 +248,181 @@ app.get('/download/status/:downloadId', (req, res) => {
       }
       
       // If we get here, the download is complete
-      // Filter out text files and get the actual media files
-      const mediaFiles = files.filter(file => !file.endsWith('.txt'));
+      console.log(`Processing completed download for ${downloadId}`);
       
-      // Create URLs for each file
-      const fileUrls = files.map(file => {
-        return {
+      // Filter out text files and get the actual media files
+      const mediaFiles = files.filter(file => 
+        !file.endsWith('.txt') && 
+        !file.includes('arl_temp') && 
+        file !== 'files.json'
+      );
+      
+      console.log(`Found ${mediaFiles.length} media files after filtering:`, mediaFiles);
+      
+      // Check if we have a files.json with metadata
+      let filesWithMetadata = [];
+      const filesJsonPath = path.join(downloadPath, 'files.json');
+      console.log(`\n=== METADATA PROCESSING ===`);
+      console.log(`Checking for files.json at: ${filesJsonPath}`);
+      
+      if (fs.existsSync(filesJsonPath)) {
+        try {
+          console.log(`SUCCESS: files.json exists at ${filesJsonPath}`);
+          const fileContent = fs.readFileSync(filesJsonPath, 'utf8');
+          console.log(`files.json content (first 100 chars): ${fileContent.substring(0, 100)}...`);
+          
+          const filesData = JSON.parse(fileContent);
+          console.log(`SUCCESS: Parsed files.json successfully`);
+          
+          // Log the structure of the parsed data
+          console.log(`filesData structure: ${typeof filesData}`);
+          if (filesData) {
+            console.log(`filesData keys: ${Object.keys(filesData).join(', ')}`);
+            if (filesData.files) {
+              console.log(`filesData.files is an array: ${Array.isArray(filesData.files)}`);
+              console.log(`filesData.files length: ${filesData.files.length}`);
+              
+              if (filesData.files.length > 0) {
+                const firstFile = filesData.files[0];
+                console.log(`First file in metadata:`);
+                console.log(`  - Keys: ${Object.keys(firstFile).join(', ')}`);
+                console.log(`  - path: ${firstFile.path || 'undefined'}`);
+                console.log(`  - size: ${firstFile.size || 'undefined'}`);
+                console.log(`  - type: ${firstFile.type || 'undefined'}`);
+              }
+            } else {
+              console.log(`WARNING: filesData.files is undefined or not an array`);
+            }
+          } else {
+            console.log(`WARNING: filesData is null or undefined`);
+          }
+          
+          if (filesData && filesData.files) {
+            console.log(`\n=== FILE URL GENERATION ===`);
+            console.log(`Processing ${filesData.files.length} files from metadata`);
+            
+            // Create a simplified ID for each file to use in URLs
+            filesWithMetadata = filesData.files.map((fileInfo, index) => {
+              console.log(`\nProcessing file ${index + 1}:`);
+              console.log(`  Original path: ${fileInfo.path}`);
+              
+              // Extract file extension
+              const fileExt = fileInfo.path.split('.').pop().toLowerCase();
+              console.log(`  File extension: ${fileExt}`);
+              
+              // Create a simple ID based on index and file type
+              const simpleId = `track_${index + 1}.${fileExt}`;
+              console.log(`  Generated simple ID: ${simpleId}`);
+              
+              // Generate the URL
+              const encodedSimpleId = encodeURIComponent(simpleId);
+              const fileUrl = `/download/file/${downloadId}/${encodedSimpleId}`;
+              console.log(`  Generated URL: ${fileUrl}`);
+              
+              // Check if the file exists on disk
+              const fullFilePath = path.join(downloadPath, fileInfo.path);
+              let fileExists = fs.existsSync(fullFilePath);
+              console.log(`  File exists at ${fullFilePath}: ${fileExists}`);
+              
+              // If the file doesn't exist at the expected path, try to find it by scanning the directory
+              let actualFilePath = fullFilePath;
+              if (!fileExists) {
+                console.log(`  WARNING: File not found at expected path: ${fullFilePath}`);
+                // Try to find the file by extension
+                try {
+                  const dirFiles = fs.readdirSync(downloadPath);
+                  // First try to find files with the exact extension
+                  const matchingFiles = dirFiles.filter(f => f.endsWith(`.${fileExt}`));
+                  console.log(`  Found ${matchingFiles.length} files with extension .${fileExt}`);
+                  
+                  if (matchingFiles.length > 0) {
+                    // Use the first matching file found
+                    const matchedFile = matchingFiles[0];
+                    actualFilePath = path.join(downloadPath, matchedFile);
+                    fileExists = true;
+                    console.log(`  Found matching file: ${matchedFile}`);
+                    console.log(`  Using alternative path: ${actualFilePath}`);
+                  }
+                } catch (err) {
+                  console.error(`  ERROR: Failed to search for matching files: ${err.message}`);
+                }
+              }
+              
+              return {
+                name: fileInfo.path, // Keep the original name for display
+                // Use the simple ID in the URL instead of the full path
+                url: fileUrl,
+                // Store the original path for reference
+                originalPath: fileInfo.path,
+                // Store the actual file path (which might be different if we found an alternative)
+                actualPath: path.basename(actualFilePath),
+                size: fileInfo.size,
+                type: fileInfo.type,
+                // Store the simple ID for reference
+                simpleId: simpleId,
+                // Store whether the file exists
+                exists: fileExists
+              };
+            });
+            
+            // Save the mapping of simple IDs to original filenames for the download endpoint
+            const mappingPath = path.join(downloadPath, 'file_mapping.json');
+            const mapping = {
+              files: filesWithMetadata.map(file => ({
+                simpleId: file.simpleId,
+                originalPath: file.originalPath,
+                actualPath: file.actualPath,
+                exists: file.exists
+              }))
+            };
+            
+            console.log(`\n=== FILE MAPPING CREATION ===`);
+            console.log(`Creating file mapping at ${mappingPath}`);
+            fs.writeFileSync(mappingPath, JSON.stringify(mapping, null, 2));
+            console.log(`SUCCESS: Created file mapping with ${mapping.files.length} entries`);
+            
+            console.log(`\n=== FILES WITH METADATA ===`);
+            filesWithMetadata.forEach((file, index) => {
+              console.log(`File ${index + 1}:`);
+              console.log(`  Name: ${file.name}`);
+              console.log(`  URL: ${file.url}`);
+              console.log(`  Original Path: ${file.originalPath}`);
+              console.log(`  Actual Path: ${file.actualPath}`);
+              console.log(`  Size: ${file.size} bytes`);
+              console.log(`  Type: ${file.type}`);
+              console.log(`  Simple ID: ${file.simpleId}`);
+              console.log(`  Exists: ${file.exists}`);
+            });
+          }
+        } catch (e) {
+          console.error('Error parsing files.json:', e);
+        }
+      } else {
+        console.log('files.json not found, checking for media files directly');
+      }
+      
+      // If we have metadata, use it; otherwise fall back to simple file listing
+      let fileUrls = [];
+      
+      if (filesWithMetadata.length > 0) {
+        console.log('Using files from metadata');
+        fileUrls = filesWithMetadata;
+        
+        // Debug each file from metadata
+        fileUrls.forEach(file => {
+          console.log(`File from metadata: ${JSON.stringify(file)}`);
+          // Ensure the URL is properly encoded
+          file.url = `/download/file/${downloadId}/${encodeURIComponent(file.name)}`;
+        });
+      } else {
+        console.log('Using files from directory listing');
+        fileUrls = mediaFiles.map(file => ({
           name: file,
           url: `/download/file/${downloadId}/${encodeURIComponent(file)}`
-        };
-      });
+        }));
+      }
+      
+      console.log('Final file URLs to send to client:', fileUrls);
       
       return res.json({ 
         status: 'complete', 
@@ -119,15 +436,220 @@ app.get('/download/status/:downloadId', (req, res) => {
 // Endpoint to download a specific file
 app.get('/download/file/:downloadId/:filename', (req, res) => {
   const { downloadId, filename } = req.params;
-  const filePath = path.join(__dirname, 'downloads', downloadId, decodeURIComponent(filename));
+  const downloadDir = path.join(__dirname, 'downloads', downloadId);
+  const decodedFilename = decodeURIComponent(filename);
   
-  // Check if the file exists
-  if (!fs.existsSync(filePath)) {
+  console.log(`\n=== FILE DOWNLOAD REQUEST ===`);
+  console.log(`[${new Date().toISOString()}] Download request received`);
+  console.log(`Download ID: ${downloadId}`);
+  console.log(`Encoded filename: ${filename}`);
+  console.log(`Decoded filename: ${decodedFilename}`);
+  console.log(`Download directory: ${downloadDir}`);
+  
+  // Verify the download directory exists
+  if (!fs.existsSync(downloadDir)) {
+    console.log(`ERROR: Download directory does not exist: ${downloadDir}`);
+    return res.status(404).json({ error: 'Download directory not found' });
+  }
+  
+  console.log(`SUCCESS: Download directory exists`);
+  
+  // Log directory contents
+  try {
+    const dirContents = fs.readdirSync(downloadDir);
+    console.log(`\n=== DIRECTORY CONTENTS ===`);
+    console.log(`Files in directory (${dirContents.length} total):`);
+    dirContents.forEach((file, index) => {
+      try {
+        const stats = fs.statSync(path.join(downloadDir, file));
+        const fileSizeKB = (stats.size / 1024).toFixed(2);
+        console.log(`  ${index + 1}. ${file} (${fileSizeKB} KB) - ${stats.isDirectory() ? 'Directory' : 'File'}`);
+      } catch (err) {
+        console.log(`  ${index + 1}. ${file} (Error getting stats: ${err.message})`);
+      }
+    });
+  } catch (err) {
+    console.error(`ERROR: Failed to read directory contents: ${err.message}`);
+  }
+  
+  // Check if we have a file mapping
+  console.log(`\n=== FILE MAPPING CHECK ===`);
+  const mappingPath = path.join(downloadDir, 'file_mapping.json');
+  console.log(`Looking for mapping file at: ${mappingPath}`);
+  
+  if (fs.existsSync(mappingPath)) {
+    console.log(`SUCCESS: Found file mapping at ${mappingPath}`);
+    try {
+      const mappingContent = fs.readFileSync(mappingPath, 'utf8');
+      console.log(`Mapping content (first 100 chars): ${mappingContent.substring(0, 100)}...`);
+      
+      const mapping = JSON.parse(mappingContent);
+      console.log(`Parsed mapping successfully`);
+      console.log(`Mapping contains ${mapping.files ? mapping.files.length : 0} file entries`);
+      
+      // Log all mapping entries
+      if (mapping.files && mapping.files.length > 0) {
+        console.log(`Mapping entries:`);
+        mapping.files.forEach((entry, index) => {
+          console.log(`  ${index + 1}. simpleId: ${entry.simpleId}, originalPath: ${entry.originalPath}, exists: ${entry.exists}`);
+        });
+      }
+      
+      // Look for the file in the mapping
+      console.log(`\n=== LOOKING FOR FILE IN MAPPING ===`);
+      console.log(`Looking for simpleId: ${decodedFilename}`);
+      
+      const fileEntry = mapping.files.find(entry => entry.simpleId === decodedFilename);
+      if (fileEntry) {
+        console.log(`SUCCESS: Found mapping entry for ${decodedFilename}`);
+        console.log(`Mapped to original path: ${fileEntry.originalPath}`);
+        console.log(`Actual path (if different): ${fileEntry.actualPath || 'same as original'}`);
+        console.log(`Entry 'exists' flag: ${fileEntry.exists}`);
+        
+        // First try the actual path if it exists and is different from the original
+        let filePath = null;
+        if (fileEntry.actualPath && fileEntry.actualPath !== fileEntry.originalPath) {
+          filePath = path.join(downloadDir, fileEntry.actualPath);
+          console.log(`Trying actual path first: ${filePath}`);
+          
+          if (fs.existsSync(filePath)) {
+            console.log(`SUCCESS: File exists at actual path`);
+            return res.download(filePath);
+          } else {
+            console.log(`WARNING: File not found at actual path`);
+          }
+        }
+        
+        // Then try the original path from the mapping
+        const mappedFilePath = path.join(downloadDir, fileEntry.originalPath);
+        console.log(`Trying original path: ${mappedFilePath}`);
+        
+        // Check if the mapped file exists
+        const mappedFileExists = fs.existsSync(mappedFilePath);
+        console.log(`File exists at original path: ${mappedFileExists}`);
+        
+        if (mappedFileExists) {
+          console.log(`SUCCESS: Sending file from original path: ${mappedFilePath}`);
+          return res.download(mappedFilePath);
+        } else {
+          console.log(`WARNING: File not found at original path: ${mappedFilePath}`);
+          
+          // If neither path worked, scan the directory for any audio files
+          console.log(`Scanning directory for audio files...`);
+          try {
+            const files = fs.readdirSync(downloadDir);
+            const audioFiles = files.filter(file => 
+              file.endsWith('.mp3') || file.endsWith('.flac') || file.endsWith('.m4a'));
+            
+            if (audioFiles.length > 0) {
+              const audioFile = audioFiles[0];
+              const audioFilePath = path.join(downloadDir, audioFile);
+              console.log(`Found audio file: ${audioFile}`);
+              console.log(`SUCCESS: Sending found audio file: ${audioFilePath}`);
+              return res.download(audioFilePath);
+            } else {
+              console.log(`No audio files found in directory`);
+            }
+          } catch (err) {
+            console.error(`ERROR: Failed to scan directory: ${err.message}`);
+          }
+          
+          console.log(`Will try fallback methods...`);
+        }
+      } else {
+        console.log(`WARNING: No mapping found for ${decodedFilename}`);
+      }
+    } catch (err) {
+      console.error(`ERROR: Failed to parse mapping file: ${err.message}`);
+    }
+  } else {
+    console.log(`WARNING: No file mapping found at ${mappingPath}`);
+  }
+  
+  // If we couldn't use the mapping, fall back to direct file access
+  console.log(`\n=== FALLBACK: DIRECT FILE ACCESS ===`);
+  
+  // First try the exact path
+  let filePath = path.join(downloadDir, decodedFilename);
+  console.log(`Trying exact path: ${filePath}`);
+  
+  // Check if the file exists at the exact path
+  const exactPathExists = fs.existsSync(filePath);
+  console.log(`File exists at exact path: ${exactPathExists}`);
+  
+  if (!exactPathExists) {
+    console.log(`\n=== FALLBACK: SEARCHING BY EXTENSION ===`);
+    
+    // Extract file extension from the decoded filename
+    const fileExt = path.extname(decodedFilename).toLowerCase();
+    console.log(`File extension from request: ${fileExt}`);
+    
+    // If not found, try to find a file with a similar name
+    try {
+      const files = fs.readdirSync(downloadDir);
+      
+      // Look for files with matching extension
+      const matchingFiles = files.filter(file => path.extname(file).toLowerCase() === fileExt);
+      console.log(`Found ${matchingFiles.length} files with extension ${fileExt}:`);
+      matchingFiles.forEach((file, index) => {
+        console.log(`  ${index + 1}. ${file}`);
+      });
+      
+      if (matchingFiles.length > 0) {
+        // Use the first matching file found
+        filePath = path.join(downloadDir, matchingFiles[0]);
+        console.log(`Using first matching file: ${filePath}`);
+      } else {
+        // No matching extension, try MP3 files as a last resort
+        console.log(`\n=== FALLBACK: SEARCHING FOR MP3 FILES ===`);
+        const mp3Files = files.filter(file => file.endsWith('.mp3'));
+        console.log(`Found ${mp3Files.length} MP3 files:`);
+        mp3Files.forEach((file, index) => {
+          console.log(`  ${index + 1}. ${file}`);
+        });
+        
+        if (mp3Files.length > 0) {
+          // Use the first MP3 file found
+          filePath = path.join(downloadDir, mp3Files[0]);
+          console.log(`Using first MP3 file: ${filePath}`);
+        }
+      }
+    } catch (err) {
+      console.error(`ERROR: Failed to search for alternative files: ${err.message}`);
+    }
+  }
+  
+  // Final check if the file exists
+  console.log(`\n=== FINAL FILE CHECK ===`);
+  console.log(`Final file path: ${filePath}`);
+  
+  const finalFileExists = fs.existsSync(filePath);
+  console.log(`Final file exists: ${finalFileExists}`);
+  
+  if (!finalFileExists) {
+    console.log(`ERROR: File not found after all attempts`);
     return res.status(404).json({ error: 'File not found' });
   }
   
+  // Get file stats for logging
+  try {
+    const stats = fs.statSync(filePath);
+    const fileSizeKB = (stats.size / 1024).toFixed(2);
+    console.log(`File size: ${fileSizeKB} KB`);
+    console.log(`File last modified: ${stats.mtime}`);
+  } catch (err) {
+    console.error(`ERROR: Failed to get file stats: ${err.message}`);
+  }
+  
+  console.log(`SUCCESS: Sending file: ${filePath}`);
   // Send the file
-  res.download(filePath);
+  res.download(filePath, (err) => {
+    if (err) {
+      console.error(`ERROR: Failed to send file: ${err.message}`);
+    } else {
+      console.log(`File download completed successfully`);
+    }
+  });
 });
 
 // API endpoint to handle download requests
@@ -229,7 +751,7 @@ app.post('/download', async (req, res) => {
         
         // Send a response to inform the client that the download has started
         res.status(202).json({ 
-          message: isSpotifyUrl(url) ? 'Spotify download started via Deezer' : 'Deezer download started', 
+          message: isSpotifyUrl(url) ? 'Spotify download started via Deezer' : 'Deezer download started - Processing your request...', 
           downloadId: downloadId,
           statusUrl: `/download/status/${downloadId}`,
           autoCheckStatus: true,

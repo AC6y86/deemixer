@@ -118,6 +118,47 @@
         #downloadFiles {
             margin-top: 15px;
         }
+        .error-message {
+            color: #721c24;
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .help-text {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #fff3cd;
+            border-radius: 4px;
+            color: #856404;
+        }
+        .help-text a {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+        .code-block {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            margin: 10px 0;
+        }
+        .info-link {
+            display: block;
+            margin: 5px 0;
+            padding: 8px 12px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            color: #333;
+            text-decoration: none;
+        }
+        .info-link:hover {
+            background-color: #e9ecef;
+            text-decoration: underline;
+        }
         .loading {
             text-align: center;
             display: none;
@@ -141,8 +182,8 @@
 <body>
     <div class="container">
         <h1>DeeMixer</h1>
-        <p>Enter a URL from YouTube, Spotify, or Deezer to download media.</p>
-        <p class="note"><small>Note: Currently only YouTube URLs are fully supported. Spotify/Deezer support coming soon!</small></p>
+        <p>Enter a URL from YouTube, Spotify, or Deezer to download media in the highest quality available.</p>
+        <p class="note"><small>Note: YouTube downloads in highest quality (video+audio). Spotify downloads in FLAC format. Deezer support coming soon!</small></p>
         
         <form id="downloadForm">
             <div class="form-group">
@@ -265,22 +306,92 @@
                         
                         // Create download links for each file
                         filesElement.innerHTML = '';
-                        data.files.forEach(file => {
-                            const downloadLink = document.createElement('a');
-                            downloadLink.href = file.url;
-                            downloadLink.className = 'download-link';
-                            downloadLink.textContent = file.name;
-                            downloadLink.setAttribute('download', file.name);
-                            filesElement.appendChild(downloadLink);
-                            filesElement.appendChild(document.createElement('br'));
-                        });
+                        
+                        // Separate media files from text files
+                        const mediaFiles = data.files.filter(file => 
+                            !file.name.endsWith('.txt') && 
+                            !file.name.endsWith('_error.txt') && 
+                            !file.name.endsWith('_info.txt'));
+                            
+                        const textFiles = data.files.filter(file => 
+                            file.name.endsWith('.txt') || 
+                            file.name.endsWith('_error.txt') || 
+                            file.name.endsWith('_info.txt'));
+                        
+                        // Display media files first
+                        if (mediaFiles.length > 0) {
+                            mediaFiles.forEach(file => {
+                                const downloadLink = document.createElement('a');
+                                downloadLink.href = file.url;
+                                downloadLink.className = 'download-link';
+                                downloadLink.textContent = file.name;
+                                downloadLink.setAttribute('download', file.name);
+                                filesElement.appendChild(downloadLink);
+                                filesElement.appendChild(document.createElement('br'));
+                            });
+                        }
+                        
+                        // If there are text files (likely error or info files), show them separately
+                        if (textFiles.length > 0) {
+                            const infoHeader = document.createElement('h3');
+                            infoHeader.textContent = 'Additional Information';
+                            infoHeader.style.marginTop = '20px';
+                            filesElement.appendChild(infoHeader);
+                            
+                            const infoText = document.createElement('p');
+                            infoText.textContent = 'There may have been issues with your download. Please check these information files:';
+                            filesElement.appendChild(infoText);
+                            
+                            textFiles.forEach(file => {
+                                const infoLink = document.createElement('a');
+                                infoLink.href = file.url;
+                                infoLink.className = 'info-link';
+                                infoLink.textContent = file.name;
+                                infoLink.target = '_blank'; // Open in new tab
+                                filesElement.appendChild(infoLink);
+                            });
+                        }
                     } else if (data.status === 'in_progress') {
                         // Download still in progress
                         progressElement.textContent = 'Download in progress... Please wait.';
                     } else if (data.status === 'error') {
                         // Error occurred
                         clearInterval(pollInterval);
-                        progressElement.textContent = 'Error: ' + data.message;
+                        progressElement.innerHTML = `<div class="error-message">Error: ${data.message}</div>`;
+                        
+                        // Add helpful information for specific errors
+                        if (data.message && data.message.includes('Spotify API credentials')) {
+                            const helpText = document.createElement('div');
+                            helpText.className = 'help-text';
+                            helpText.innerHTML = `<p>To use Spotify downloads, you need to:</p>
+                                <ol>
+                                    <li>Create a Spotify Developer account at <a href="https://developer.spotify.com/dashboard" target="_blank">developer.spotify.com</a></li>
+                                    <li>Create a new application to get Client ID and Secret</li>
+                                    <li>Create a <code>.env</code> file in the project root directory</li>
+                                    <li>Add your credentials to the <code>.env</code> file:</li>
+                                </ol>
+                                <pre class="code-block">
+# Spotify API Credentials
+SPOTIFY_CLIENT_ID=your_client_id_here
+SPOTIFY_CLIENT_SECRET=your_client_secret_here</pre>
+                                <p>See <code>.env.example</code> for a complete template.</p>`;
+                            filesElement.appendChild(helpText);
+                        } else if (data.message && (data.message.includes('Could not extract functions') || data.message.includes('Input stream error'))) {
+                            const helpText = document.createElement('div');
+                            helpText.className = 'help-text';
+                            helpText.innerHTML = `<p>There's an issue with the YouTube extraction library used by the Spotify downloader.</p>
+                                <p>Alternative options:</p>
+                                <ol>
+                                    <li>Try a YouTube URL instead</li>
+                                    <li>Use one of these alternative tools for Spotify downloads:</li>
+                                </ol>
+                                <ul>
+                                    <li><a href="https://github.com/SathyaBhat/spotify-dl" target="_blank">spotify-dl</a></li>
+                                    <li><a href="https://github.com/spotDL/spotify-downloader" target="_blank">spotDL</a></li>
+                                    <li><a href="https://github.com/Shabinder/SpotiFlyer" target="_blank">SpotiFlyer</a></li>
+                                </ul>`;
+                            filesElement.appendChild(helpText);
+                        }
                     } else if (data.status === 'not_found') {
                         // Download not found
                         clearInterval(pollInterval);

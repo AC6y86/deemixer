@@ -1,3 +1,6 @@
+// Load environment variables from .env file
+require('dotenv').config();
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
@@ -5,6 +8,10 @@ const fs = require('fs');
 const { exec } = require('child_process');
 const Spotify = require('spotifydl-core').default;
 const youtubeDl = require('youtube-dl-exec');
+
+// Spotify API credentials from environment variables
+const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || 'YOUR_SPOTIFY_CLIENT_ID';
+const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || 'YOUR_SPOTIFY_CLIENT_SECRET';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -39,14 +46,35 @@ app.get('/download/status/:downloadId', (req, res) => {
       // No files yet, download is still in progress
       return res.json({ status: 'in_progress', message: 'Download in progress' });
     } else {
-      // Files exist, download is complete
+      // Check if there's an error file
+      if (files.includes('download_error.txt')) {
+        // Read the error file
+        try {
+          const errorMessage = fs.readFileSync(path.join(downloadPath, 'download_error.txt'), 'utf8');
+          return res.json({ 
+            status: 'error', 
+            message: errorMessage || 'Download failed' 
+          });
+        } catch (readErr) {
+          return res.json({ 
+            status: 'error', 
+            message: 'Download failed with unknown error' 
+          });
+        }
+      }
+      
+      // Files exist and no error, download is complete
       // Log the files found for debugging
       console.log(`Found ${files.length} files in download directory ${downloadPath}:`, files);
+      
+      // Filter out any error or system files
+      const downloadableFiles = files.filter(file => 
+        file !== 'download_error.txt' && !file.startsWith('.'));
       
       return res.json({ 
         status: 'complete', 
         message: 'Download complete', 
-        files: files.map(file => ({
+        files: downloadableFiles.map(file => ({
           name: file,
           url: `/download/file/${downloadId}/${encodeURIComponent(file)}`
         }))
@@ -144,7 +172,9 @@ app.post('/download', async (req, res) => {
               // Use the download directory but let youtube-dl name the file
               // This will include the video title in the filename
               output: path.join(outputDir, '%(title)s.%(ext)s'),
-              format: 'best[ext=mp4]',
+              // Download the highest quality available
+              format: 'bestvideo+bestaudio/best',
+              mergeOutputFormat: 'mp4',
               noCheckCertificate: true,
               noWarnings: true,
               preferFreeFormats: true,
@@ -170,6 +200,9 @@ app.post('/download', async (req, res) => {
             // for real-time updates
           } catch (error) {
             console.error('Error downloading from YouTube:', error);
+            // Create an error file in the download directory to indicate failure
+            const errorFilePath = path.join(outputDir, 'download_error.txt');
+            fs.writeFileSync(errorFilePath, `Download failed: ${error.message || 'Unknown error'}`);
           }
         })();
       } catch (error) {
@@ -189,16 +222,35 @@ app.post('/download', async (req, res) => {
           fs.mkdirSync(outputPath, { recursive: true });
         }
         
-        // Initialize the Spotify downloader
+        // Check if Spotify credentials are set
+        // Check if using placeholder credentials
+        if (SPOTIFY_CLIENT_ID === 'YOUR_SPOTIFY_CLIENT_ID' || SPOTIFY_CLIENT_SECRET === 'YOUR_SPOTIFY_CLIENT_SECRET') {
+          return res.status(400).json({ 
+            error: 'Spotify API credentials not configured. Please add your Spotify Developer credentials to the .env file.'
+          });
+        }
+        
+        // Initialize the Spotify downloader with custom options
         const spotify = new Spotify({
-          clientId: 'your-spotify-client-id', // Replace with your Spotify client ID
-          clientSecret: 'your-spotify-client-secret', // Replace with your Spotify client secret
+          clientId: SPOTIFY_CLIENT_ID,
+          clientSecret: SPOTIFY_CLIENT_SECRET,
           directory: {
             tracks: outputPath,
             albums: outputPath,
             playlists: outputPath
-          }
+          },
+          // Set to download FLAC format (highest quality)
+          format: {
+            audio: 'FLAC'
+          },
+          // Use alternative download method if available
+          // This can help bypass the ytdl-core issues
+          alternativeMethod: true
         });
+        
+        // Create a placeholder file to indicate download has started
+        const placeholderPath = path.join(outputPath, 'download_started.txt');
+        fs.writeFileSync(placeholderPath, `Download started at ${new Date().toISOString()}\nThis file will be replaced with the actual media files when download completes.`);
         
         // Send a response to inform the client that the download has started
         res.status(202).json({ 
@@ -211,6 +263,26 @@ app.post('/download', async (req, res) => {
         // Download the Spotify track/album/playlist
         (async () => {
           try {
+            // Create a fallback download info file with instructions
+            const fallbackInfoPath = path.join(outputPath, 'alternative_download_info.txt');
+            const fallbackContent = `
+Spotify Download Information
+=========================
+Requested URL: ${url}
+Time: ${new Date().toISOString()}
+
+Due to current limitations with the Spotify API and YouTube extraction,
+direct downloads may not be working properly.
+
+Alternative download options:
+1. Use spotify-dl CLI tool: https://github.com/SathyaBhat/spotify-dl
+2. Use spotDL: https://github.com/spotDL/spotify-downloader
+3. Use Spotiflyer: https://github.com/Shabinder/SpotiFlyer
+
+These tools may provide better compatibility with the latest Spotify API changes.
+`;
+            fs.writeFileSync(fallbackInfoPath, fallbackContent);
+            
             // Determine if it's a track, album, or playlist and download accordingly
             if (url.includes('/track/')) {
               await spotify.downloadTrack(url);
@@ -230,6 +302,43 @@ app.post('/download', async (req, res) => {
             // for real-time updates, which we'll implement in a future version
           } catch (error) {
             console.error('Error downloading from Spotify:', error);
+            
+            // Create a more detailed error file with troubleshooting info
+            const errorFilePath = path.join(outputPath, 'download_error.txt');
+            const errorContent = `
+Spotify Download Error
+====================
+Time: ${new Date().toISOString()}
+URL: ${url}
+
+Error Message: ${error.message || 'Unknown error'}
+
+Possible Solutions:
+1. Check your Spotify API credentials
+2. The ytdl-core library may need to be updated
+3. Try using an alternative download method (see alternative_download_info.txt)
+
+Full Error Details:
+${JSON.stringify(error, null, 2)}
+`;
+            
+            fs.writeFileSync(errorFilePath, errorContent);
+            
+            // Create the alternative download info file as a fallback
+            const alternativeInfoPath = path.join(outputPath, 'alternative_download_info.txt');
+            const alternativeContent = `
+Alternative Download Options
+==========================
+Since the automatic download failed, you can try these alternatives:
+
+1. Use spotify-dl CLI tool: https://github.com/SathyaBhat/spotify-dl
+2. Use spotDL: https://github.com/spotDL/spotify-downloader
+3. Use Spotiflyer: https://github.com/Shabinder/SpotiFlyer
+
+These tools are regularly updated to work with the latest Spotify API changes.
+`;
+            
+            fs.writeFileSync(alternativeInfoPath, alternativeContent);
           }
         })();
       } catch (error) {

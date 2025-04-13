@@ -176,37 +176,33 @@
                 // Hide loading
                 loading.style.display = 'none';
                 
-                if (response.ok) {
-                    const contentDisposition = response.headers.get('content-disposition');
-                    let filename = 'download';
+                const responseData = await response.json();
+                
+                // Handle different response types based on status code
+                if (response.status === 202) {
+                    // This is an asynchronous download (like Spotify)
+                    const downloadId = responseData.downloadId;
                     
-                    if (contentDisposition) {
-                        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-                        if (filenameMatch && filenameMatch[1]) {
-                            filename = filenameMatch[1];
-                        }
-                    }
-                    
-                    // Create a blob from the response
-                    const blob = await response.blob();
-                    
-                    // Create a download link and trigger it
-                    const downloadUrl = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = downloadUrl;
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(downloadUrl);
-                    
-                    // Show success message
-                    status.textContent = 'Download started! If it doesn\'t begin automatically, check your browser settings.';
+                    // Show status message
+                    status.textContent = responseData.message || 'Download started. Please wait...';
                     status.className = 'status success';
                     status.style.display = 'block';
-                } else {
-                    const errorData = await response.json();
-                    status.textContent = errorData.error || 'An error occurred during download.';
+                    
+                    // In a future version, we could implement polling to check download status
+                    // or use WebSockets for real-time updates
+                    
+                } else if (response.status === 200) {
+                    // This is a direct download with a file (like YouTube)
+                    // For now, we'll show a message that the user needs to use the download endpoint directly
+                    status.textContent = 'Download ready! Please use the direct download link.';
+                    status.className = 'status success';
+                    status.style.display = 'block';
+                    
+                    // In a future version, we'll implement direct file downloads here
+                    
+                } else if (response.status >= 400) {
+                    // Error response
+                    status.textContent = responseData.error || 'An error occurred during download.';
                     status.className = 'status error';
                     status.style.display = 'block';
                 }
@@ -221,6 +217,19 @@
                 console.error('Error:', error);
             }
         });
+        
+        // Function to check download status (for future implementation)
+        async function checkDownloadStatus(downloadId) {
+            try {
+                const response = await fetch(`/download/status/${downloadId}`);
+                const data = await response.json();
+                
+                return data;
+            } catch (error) {
+                console.error('Error checking download status:', error);
+                return { status: 'error', message: 'Failed to check download status' };
+            }
+        }
     </script>
 </body>
 </html>

@@ -4,6 +4,7 @@ const path = require('path');
 const ytdl = require('ytdl-core');
 const fs = require('fs');
 const { exec } = require('child_process');
+const Spotify = require('spotifydl-core').default;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,6 +17,58 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Routes
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Endpoint to check download status
+app.get('/download/status/:downloadId', (req, res) => {
+  const { downloadId } = req.params;
+  const downloadPath = path.join(__dirname, 'downloads', downloadId);
+  
+  // Check if the download directory exists
+  if (!fs.existsSync(downloadPath)) {
+    return res.status(404).json({ status: 'not_found', message: 'Download not found' });
+  }
+  
+  // List files in the download directory
+  fs.readdir(downloadPath, (err, files) => {
+    if (err) {
+      return res.status(500).json({ status: 'error', message: 'Failed to check download status' });
+    }
+    
+    if (files.length === 0) {
+      // No files yet, download is still in progress
+      return res.json({ status: 'in_progress', message: 'Download in progress' });
+    } else {
+      // Files exist, download is complete
+      return res.json({ 
+        status: 'complete', 
+        message: 'Download complete', 
+        files: files.map(file => ({
+          name: file,
+          url: `/download/file/${downloadId}/${encodeURIComponent(file)}`
+        }))
+      });
+    }
+  });
+});
+
+// Endpoint to download a specific file
+app.get('/download/file/:downloadId/:filename', (req, res) => {
+  const { downloadId, filename } = req.params;
+  const filePath = path.join(__dirname, 'downloads', downloadId, decodeURIComponent(filename));
+  
+  // Check if the file exists
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'File not found' });
+  }
+  
+  // Send the file
+  res.download(filePath, decodeURIComponent(filename), (err) => {
+    if (err) {
+      console.error('Error sending file:', err);
+      return res.status(500).json({ error: 'Failed to download file' });
+    }
+  });
 });
 
 // Helper function to ensure downloads directory exists
@@ -68,42 +121,70 @@ app.post('/download', async (req, res) => {
           });
         });
     } 
-    // Check if URL is from Spotify or Deezer
-    else if (isSpotifyUrl(url) || isDeezerUrl(url)) {
-      // For now, we'll return a message that this feature is coming soon
-      return res.status(501).json({ 
-        error: 'Spotify/Deezer downloads are coming soon! Currently only YouTube URLs are supported.' 
-      });
-      
-      /* 
-      // This is a placeholder for future implementation using deemix CLI
-      // We would use child_process.exec to call the deemix CLI
-      const downloadId = Date.now().toString();
-      const outputPath = path.join(__dirname, 'downloads', downloadId);
-      
-      exec(`deemix -p ${outputPath} ${url}`, (error, stdout, stderr) => {
-        if (error) {
-          console.error(`Error: ${error.message}`);
-          return res.status(500).json({ error: 'Failed to download from Spotify/Deezer' });
+    // Check if URL is from Spotify
+    else if (isSpotifyUrl(url)) {
+      try {
+        // Create a unique download ID and path
+        const downloadId = Date.now().toString();
+        const outputPath = path.join(__dirname, 'downloads', downloadId);
+        
+        // Ensure the output directory exists
+        if (!fs.existsSync(outputPath)) {
+          fs.mkdirSync(outputPath, { recursive: true });
         }
         
-        // Find the downloaded file and send it
-        fs.readdir(outputPath, (err, files) => {
-          if (err || files.length === 0) {
-            return res.status(500).json({ error: 'Failed to find downloaded file' });
+        // Initialize the Spotify downloader
+        const spotify = new Spotify({
+          clientId: 'your-spotify-client-id', // Replace with your Spotify client ID
+          clientSecret: 'your-spotify-client-secret', // Replace with your Spotify client secret
+          directory: {
+            tracks: outputPath,
+            albums: outputPath,
+            playlists: outputPath
           }
-          
-          const filePath = path.join(outputPath, files[0]);
-          res.download(filePath, files[0], (err) => {
-            if (err) {
-              console.error('Error sending file:', err);
-            }
-            // Optionally clean up after download
-            // fs.rmdirSync(outputPath, { recursive: true });
-          });
         });
+        
+        // Send a response to inform the client that the download has started
+        res.status(202).json({ 
+          message: 'Spotify download started. This may take a while depending on the content.', 
+          downloadId: downloadId 
+        });
+        
+        // Download the Spotify track/album/playlist
+        (async () => {
+          try {
+            // Determine if it's a track, album, or playlist and download accordingly
+            if (url.includes('/track/')) {
+              await spotify.downloadTrack(url);
+            } else if (url.includes('/album/')) {
+              await spotify.downloadAlbum(url);
+            } else if (url.includes('/playlist/')) {
+              await spotify.downloadPlaylist(url);
+            } else {
+              console.error('Unsupported Spotify URL type');
+              return;
+            }
+            
+            console.log(`Download completed to ${outputPath}`);
+            
+            // We don't send the file here since we've already sent a 202 response
+            // The client will need to poll for the download status or use WebSockets
+            // for real-time updates, which we'll implement in a future version
+          } catch (error) {
+            console.error('Error downloading from Spotify:', error);
+          }
+        })();
+      } catch (error) {
+        console.error('Error setting up Spotify download:', error);
+        return res.status(500).json({ error: 'Failed to set up Spotify download' });
+      }
+    }
+    // Check if URL is from Deezer
+    else if (isDeezerUrl(url)) {
+      // For now, we'll return a message that this feature is coming soon
+      return res.status(501).json({ 
+        error: 'Deezer downloads are coming soon! Currently only YouTube and Spotify URLs are supported.' 
       });
-      */
     } else {
       // For other URLs, return error
       return res.status(400).json({ 

@@ -49,152 +49,127 @@
             padding: 30px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-            margin-bottom: 30px;
-        }
         .form-group {
             margin-bottom: 20px;
         }
         label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             font-weight: 600;
         }
         input[type="text"] {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 16px;
-            box-sizing: border-box;
         }
         button {
-            background-color: #3498db;
+            background-color: #4CAF50;
             color: white;
             border: none;
-            padding: 12px 20px;
+            padding: 10px 20px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
-            width: 100%;
-            transition: background-color 0.3s;
+            font-weight: 500;
         }
         button:hover {
-            background-color: #2980b9;
+            background-color: #45a049;
         }
-        .status {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 4px;
-            display: none;
-        }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        .info {
-            background-color: #d1ecf1;
-            color: #0c5460;
-        }
-        .download-link {
-            display: inline-block;
-            margin: 10px 0;
-            padding: 10px 15px;
-            background-color: #4CAF50;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            font-weight: 500;
-            transition: background-color 0.3s;
-        }
-        .download-link:hover {
-            background-color: #388E3C;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .download-button {
-            display: inline-block;
-            margin: 8px 0;
-            padding: 10px 20px;
-            background-color: #2196F3;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .download-button:hover {
-            background-color: #1976D2;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .download-button:disabled {
-            background-color: #BDBDBD;
+        button:disabled {
+            background-color: #cccccc;
             cursor: not-allowed;
         }
-        #downloadFiles {
-            margin-top: 15px;
-        }
-        .error-message {
-            color: #721c24;
-            background-color: #f8d7da;
-            padding: 15px;
-            border-radius: 4px;
-            margin-top: 10px;
-            border-left: 4px solid #f5c6cb;
-        }
-        .help-text {
-            margin-top: 15px;
-            padding: 10px;
-            background-color: #fff3cd;
-            border-radius: 4px;
-            color: #856404;
-        }
-        .help-text a {
-            color: #0056b3;
-            text-decoration: underline;
-        }
-        .code-block {
-            background-color: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 10px;
-            font-family: monospace;
-            white-space: pre-wrap;
-            margin: 10px 0;
-        }
-        .info-link {
-            display: block;
-            margin: 5px 0;
-            padding: 8px 12px;
-            background-color: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            color: #333;
-            text-decoration: none;
-        }
-        .info-link:hover {
-            background-color: #e9ecef;
-            text-decoration: underline;
-        }
         .loading {
+            display: none;
             text-align: center;
+            margin-top: 20px;
+        }
+        .status {
             display: none;
             margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #e8f5e9;
+            border-left: 5px solid #4CAF50;
+        }
+        .error {
+            background-color: #ffebee;
+            border-left: 5px solid #f44336;
         }
         .spinner {
             border: 4px solid rgba(0, 0, 0, 0.1);
             width: 36px;
             height: 36px;
             border-radius: 50%;
-            border-left-color: #3498db;
+            border-top: 4px solid #4CAF50;
             animation: spin 1s linear infinite;
-            margin: 0 auto;
+            margin: 0 auto 10px;
+        }
+        .download-link {
+            display: inline-block;
+            background-color: #2196F3;
+            color: white;
+            padding: 8px 16px;
+            margin: 5px 0;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .download-link:hover {
+            background-color: #0b7dda;
+        }
+        .info-link {
+            display: inline-block;
+            background-color: #ff9800;
+            color: white;
+            padding: 8px 16px;
+            margin: 5px 0;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .info-link:hover {
+            background-color: #e68a00;
+        }
+        .download-button {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+        .download-button:hover {
+            background-color: #0b7dda;
+        }
+        .error-message {
+            background-color: #ffebee;
+            border-left: 5px solid #f44336;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .help-text {
+            background-color: #e3f2fd;
+            border-left: 5px solid #2196F3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .code-block {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            margin: 10px 0;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -233,652 +208,383 @@
     </div>
 
     <script>
-        document.getElementById('downloadForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const url = document.getElementById('url').value.trim();
-            const loading = document.getElementById('loading');
-            const status = document.getElementById('status');
-            
-            // Reset status
-            status.textContent = '';
-            status.className = 'status';
-            status.style.display = 'none';
-            
-            // Show loading
-            loading.style.display = 'block';
-            
-            try {
-                const response = await fetch('/download', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ url }),
-                });
+        document.addEventListener('DOMContentLoaded', function() {
+            // Main form submission handler
+            document.getElementById('downloadForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
                 
-                // Hide loading
-                loading.style.display = 'none';
+                const url = document.getElementById('url').value.trim();
+                const loading = document.getElementById('loading');
+                const status = document.getElementById('status');
                 
-                // Handle different response types based on status code
-                if (response.status === 202) {
-                    // This is an asynchronous download
-                    const responseData = await response.json();
-                    const downloadId = responseData.downloadId;
+                // Reset status
+                status.textContent = '';
+                status.className = 'status';
+                status.style.display = 'none';
+                
+                // Show loading
+                loading.style.display = 'block';
+                
+                try {
+                    // Send request to server
+                    const response = await fetch('/download', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ url })
+                    });
                     
-                    // Show status message
-                    status.innerHTML = `
-                        <p>${responseData.message || 'Download started. Please wait...'}</p>
-                        <div id="downloadProgress">Checking download status...</div>
-                        <div id="downloadFiles"></div>
-                    `;
-                    status.className = 'status success';
-                    status.style.display = 'block';
+                    // Hide loading
+                    loading.style.display = 'none';
                     
-                    // Start polling for download status if auto-check is enabled
-                    if (responseData.autoCheckStatus) {
-                        pollDownloadStatus(downloadId);
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('Response data:', data);
+                        
+                        if (data.downloadId) {
+                            // Show status with download ID
+                            status.innerHTML = `
+                                <p>${data.message}</p>
+                                <div id="downloadProgress">Checking download status...</div>
+                                <div id="downloadFiles"></div>
+                            `;
+                            status.className = 'status success';
+                            status.style.display = 'block';
+                            
+                            // Start polling for download status
+                            if (data.autoCheckStatus) {
+                                pollDownloadStatus(data.downloadId);
+                            }
+                        } else {
+                            // Show error message
+                            status.textContent = data.message || 'An error occurred. Please try again.';
+                            status.className = 'status error';
+                            status.style.display = 'block';
+                        }
+                    } else {
+                        // Show error message
+                        const errorData = await response.json();
+                        status.textContent = errorData.message || 'An error occurred. Please try again.';
+                        status.className = 'status error';
+                        status.style.display = 'block';
                     }
+                } catch (error) {
+                    // Hide loading
+                    loading.style.display = 'none';
                     
-                } else if (response.status >= 400) {
-                    // Error response
-                    const responseData = await response.json();
-                    status.textContent = responseData.error || 'An error occurred during download.';
+                    // Show error message
+                    status.textContent = 'An error occurred. Please try again.';
                     status.className = 'status error';
                     status.style.display = 'block';
-                } else {
-                    // For any other response, try to parse as JSON first
-                    try {
-                        const responseData = await response.json();
-                        status.textContent = responseData.message || 'Unknown response from server.';
-                        status.className = 'status info';
-                        status.style.display = 'block';
-                    } catch (e) {
-                        // If not JSON, it might be a direct file download
-                        status.textContent = 'Download completed successfully!';
-                        status.className = 'status success';
-                        status.style.display = 'block';
-                    }
+                    console.error('Error:', error);
                 }
-            } catch (error) {
-                // Hide loading
-                loading.style.display = 'none';
-                
-                // Show error message
-                status.textContent = 'An error occurred. Please try again.';
-                status.className = 'status error';
-                status.style.display = 'block';
-                console.error('Error:', error);
-            }
-        });
-        
-        // Function to poll download status until complete
-        async function pollDownloadStatus(downloadId) {
-            const progressElement = document.getElementById('downloadProgress');
-            const filesElement = document.getElementById('downloadFiles');
+            });
             
-            // Poll every 2 seconds
-            const pollInterval = setInterval(async () => {
+            // Function to check download status
+            async function checkDownloadStatus(downloadId) {
                 try {
-                    const data = await checkDownloadStatus(downloadId);
+                    console.log(`Checking download status for ID: ${downloadId}`);
+                    const response = await fetch(`/download/status/${downloadId}`);
+                    const data = await response.json();
+                    console.log(`Download status response:`, data);
+                    return data;
+                } catch (error) {
+                    console.error('Error checking download status:', error);
+                    return { status: 'error', message: 'Failed to check download status' };
+                }
+            }
+            
+            // Function to poll download status until complete
+            function pollDownloadStatus(downloadId) {
+                const progressElement = document.getElementById('downloadProgress');
+                const filesElement = document.getElementById('downloadFiles');
+                
+                // Poll every 2 seconds
+                const pollInterval = setInterval(async () => {
+                    try {
+                        const data = await checkDownloadStatus(downloadId);
+                        
+                        if (data.status === 'complete') {
+                            // Download is complete, stop polling
+                            clearInterval(pollInterval);
+                            
+                            // First, show a message that we're preparing the files
+                            progressElement.textContent = 'Download complete! Preparing files for download...';
+                            
+                            // Add a significant delay to ensure files are fully ready before showing download buttons
+                            setTimeout(() => {
+                                handleCompletedDownload(data, downloadId, progressElement, filesElement);
+                            }, 8000); // 8 second delay to ensure files are fully ready
+                        } else if (data.status === 'in_progress') {
+                            progressElement.textContent = 'Download in progress... Please wait.';
+                        } else if (data.status === 'not_found') {
+                            // Download not found
+                            clearInterval(pollInterval);
+                            progressElement.textContent = 'Download not found. It may have been removed.';
+                        } else {
+                            progressElement.textContent = `Download status: ${data.status || 'unknown'}`;
+                        }
+                    } catch (error) {
+                        console.error('Error polling download status:', error);
+                        progressElement.textContent = 'Error checking download status. Please try again later.';
+                    }
+                }, 2000);
+            }
+            
+            // Function to handle completed downloads after the delay
+            function handleCompletedDownload(data, downloadId, progressElement, filesElement) {
+                // Check if we have downloadButtonsHtml from the server
+                if (data.downloadButtonsHtml && data.downloadButtonsHtml.trim() !== '') {
+                    console.log('Using pre-generated download buttons HTML from server');
+                    progressElement.textContent = 'Download complete! Files are ready. Click below to download:';
                     
-                    if (data.status === 'complete') {
-                        // Download is complete, but add a delay before showing download links
-                        clearInterval(pollInterval);
+                    // Create a container for the download buttons
+                    const downloadContainer = document.createElement('div');
+                    downloadContainer.innerHTML = '<h3>Available Downloads:</h3>';
+                    
+                    // Create a wrapper div for the download links
+                    const linksWrapper = document.createElement('div');
+                    linksWrapper.className = 'download-links-wrapper';
+                    linksWrapper.innerHTML = data.downloadButtonsHtml;
+                    
+                    // Ensure all links have the download attribute and proper event handling
+                    const links = linksWrapper.querySelectorAll('a');
+                    links.forEach(link => {
+                        // Make sure the link has the download attribute
+                        if (!link.hasAttribute('download')) {
+                            const fileName = link.textContent.trim().split(' ')[0];
+                            link.setAttribute('download', fileName);
+                        }
                         
-                        // First, show a message that we're preparing the files
-                        progressElement.textContent = 'Download complete! Preparing files for download...';
-                        
-                        // Add a delay to ensure files are fully ready before showing download buttons
-                        setTimeout(() => {
-                            // Check if we have any media files to display
-                            const hasMediaFiles = data.files.some(file => {
-                                if (!file || !file.name) return false;
-                                const filename = file.name.toLowerCase();
-                                return (
-                                    filename.endsWith('.mp3') || 
-                                    filename.endsWith('.mp4') || 
-                                    filename.endsWith('.flac') || 
-                                    filename.endsWith('.wav') ||
-                                    (file.type && file.type.startsWith('audio/'))
-                                );
-                            });
-                            
-                            if (hasMediaFiles) {
-                                progressElement.textContent = 'Download complete! Files are ready. Click below to download:';
-                            } else {
-                                progressElement.textContent = 'Download processing completed. Looking for available files...';
-                            }
-                            
-                            // Process the downloaded files after the delay
-                            // Create download links for each file
-                            filesElement.innerHTML = '';
-                            
-                            // Add debugging information
-                            console.log('Files received from server after delay:', data.files);
-                            
-                            // Separate media files from text files
-                            const mediaFiles = data.files.filter(file => {
-                                // Handle potential undefined or null file
-                                if (!file) {
-                                    console.log(`Invalid file object: null or undefined`);
-                                    return false;
-                                }
-                                
-                                console.log(`Filtering file:`, file);
-                                
-                                // Check for different property combinations that indicate a media file
-                                // Case 1: Standard file with name property
-                                if (file.name) {
-                                    const filename = file.name.toLowerCase();
-                                    console.log(`  - Has name property: ${filename}`);
-                                    
-                                    // Check if it's a media file by extension
-                                    const isMediaByExtension = (
-                                        filename.endsWith('.mp3') || 
-                                        filename.endsWith('.mp4') || 
-                                        filename.endsWith('.flac') || 
-                                        filename.endsWith('.wav')
-                                    );
-                                    
-                                    // Check if it's a media file by MIME type
-                                    const isMediaByType = (file.type && file.type.startsWith('audio/'));
-                                    
-                                    if (isMediaByExtension || isMediaByType) {
-                                        console.log(`  - MATCH: Media file by name/type`);
-                                        return true;
-                                    }
-                                }
-                                
-                                // Continue with the rest of the filtering logic
-                                // (This is just the beginning of the function to fix the syntax error)
-                        }, 5000); // 5 second delay to ensure files are fully ready
-                        
-                        // Return early to prevent immediate processing
-                        return;
+                        // Add click event handler to prevent default if needed
+                        link.addEventListener('click', function(e) {
+                            console.log(`Download link clicked: ${link.href}`);
+                            // Let the download happen naturally
+                        });
+                    });
+                    
+                    // Append the links to the container
+                    downloadContainer.appendChild(linksWrapper);
+                    
+                    // Clear and append the container to the files element
+                    filesElement.innerHTML = '';
+                    filesElement.appendChild(downloadContainer);
+                    
+                    // Add a refresh button to check for more files
+                    addRefreshButton(downloadId, progressElement, filesElement);
+                    return;
+                }
+                
+                // If no HTML was provided, process the files array
+                if (!data.files || data.files.length === 0) {
+                    // No files found, show message and check music directory
+                    progressElement.textContent = 'Checking for downloaded files...';
+                    
+                    // Immediately try to check for music files
+                    checkForMusicFiles(downloadId, progressElement, filesElement);
+                    return;
+                }
+                
+                // We have files, show them
+                progressElement.textContent = 'Download complete! Files are ready. Click below to download:';
+                filesElement.innerHTML = '<h3>Available Downloads:</h3>';
+                
+                // Create download links for each file
+                data.files.forEach(file => {
+                    if (!file || !file.url) return;
+                    
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = file.url;
+                    downloadLink.className = 'download-link';
+                    
+                    // Use the most appropriate name available
+                    let displayName = file.path || file.name || 'Download File';
+                    downloadLink.textContent = displayName;
+                    downloadLink.setAttribute('download', displayName);
+                    
+                    // Add file size if available
+                    if (file.size) {
+                        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                        downloadLink.textContent += ` (${sizeMB} MB)`;
                     }
                     
-                    // Create download links for each file
-                    filesElement.innerHTML = '';
+                    // Add click event handler to log downloads
+                    downloadLink.addEventListener('click', function(e) {
+                        console.log(`Download link clicked: ${downloadLink.href}`);
+                        // Let the download happen naturally
+                    });
+                    
+                    filesElement.appendChild(downloadLink);
+                    filesElement.appendChild(document.createElement('br'));
+                });
+                
+                // Add a refresh button to check for more files
+                addRefreshButton(downloadId, progressElement, filesElement);
+            }
+            
+            // Function to add a refresh button
+            function addRefreshButton(downloadId, progressElement, filesElement) {
+                const refreshButton = document.createElement('button');
+                refreshButton.textContent = 'Check for More Files';
+                refreshButton.className = 'download-button';
+                refreshButton.style.marginTop = '20px';
+                refreshButton.addEventListener('click', function() {
+                    refreshButton.textContent = 'Checking...';
+                    refreshButton.disabled = true;
+                    checkForMusicFiles(downloadId, progressElement, filesElement, refreshButton);
+                });
+                
+                filesElement.appendChild(refreshButton);
+            }
+            
+            // Function to check for music files
+            async function checkForMusicFiles(downloadId, progressElement, filesElement, refreshButton = null) {
+                try {
+                    // Check if music files are available
+                    const timestamp = new Date().getTime();
+                    const musicCheckResponse = await fetch(`/download/check-music/${downloadId}?t=${timestamp}`);
+                    const musicCheckData = await musicCheckResponse.json();
+                    
+                    if (musicCheckData.success && musicCheckData.files && musicCheckData.files.length > 0) {
+                        progressElement.textContent = 'Files found! Click below to download:';
                         
-                        // Add debugging information
-                        console.log('Files received from server:', data.files);
-                        
-                        // Separate media files from text files
-                        const mediaFiles = data.files.filter(file => {
-                            // Handle potential undefined or null file
-                            if (!file) {
-                                console.log(`Invalid file object: null or undefined`);
-                                return false;
+                        // If this is a refresh, keep existing content and add new files
+                        if (refreshButton) {
+                            // Remove the refresh button temporarily
+                            if (refreshButton.parentNode) {
+                                refreshButton.parentNode.removeChild(refreshButton);
                             }
                             
-                            console.log(`Filtering file:`, file);
+                            // Get existing download links
+                            const existingLinks = Array.from(filesElement.querySelectorAll('.download-link'))
+                                .map(link => link.href);
                             
-                            // Check for different property combinations that indicate a media file
-                            // Case 1: Standard file with name property
-                            if (file.name) {
-                                const filename = file.name.toLowerCase();
-                                console.log(`  - Has name property: ${filename}`);
-                                
-                                // Check if it's a media file by extension
-                                const isMediaByExtension = (
-                                    filename.endsWith('.mp3') || 
-                                    filename.endsWith('.mp4') || 
-                                    filename.endsWith('.flac') || 
-                                    filename.endsWith('.wav')
-                                );
-                                
-                                // Check if it's a media file by MIME type
-                                const isMediaByType = (file.type && file.type.startsWith('audio/'));
-                                
-                                if (isMediaByExtension || isMediaByType) {
-                                    console.log(`  - MATCH: Media file by name/type`);
-                                    return true;
-                                }
-                            }
+                            // Add only new files
+                            const newFiles = musicCheckData.files.filter(file => 
+                                !existingLinks.includes(new URL(file.url, window.location.href).href));
                             
-                            // Case 2: File from metadata (files.json) with path property
-                            if (file.path) {
-                                const path = file.path.toLowerCase();
-                                console.log(`  - Has path property: ${path}`);
+                            if (newFiles.length > 0) {
+                                const newFilesHeader = document.createElement('h3');
+                                newFilesHeader.textContent = 'Additional Files Found:';
+                                filesElement.appendChild(newFilesHeader);
                                 
-                                // Check if it's a media file by extension
-                                const isMediaByPathExtension = (
-                                    path.endsWith('.mp3') || 
-                                    path.endsWith('.mp4') || 
-                                    path.endsWith('.flac') || 
-                                    path.endsWith('.wav')
-                                );
-                                
-                                // Check if it's a media file by MIME type
-                                const isMediaByType = (file.type && file.type.startsWith('audio/'));
-                                
-                                if (isMediaByPathExtension || isMediaByType) {
-                                    console.log(`  - MATCH: Media file by path/type`);
-                                    return true;
-                                }
-                            }
-                            
-                            // Case 3: File has a MIME type that indicates audio
-                            if (file.type && file.type.startsWith('audio/')) {
-                                console.log(`  - MATCH: Media file by type only: ${file.type}`);
-                                return true;
-                            }
-                            
-                            // Case 4: File has originalPath or actualPath (from our mapping system)
-                            if (file.originalPath) {
-                                const path = file.originalPath.toLowerCase();
-                                console.log(`  - Has originalPath property: ${path}`);
-                                
-                                if (path.endsWith('.mp3') || path.endsWith('.flac') || path.endsWith('.wav')) {
-                                    console.log(`  - MATCH: Media file by originalPath`);
-                                    return true;
-                                }
-                            }
-                            
-                            if (file.actualPath) {
-                                const path = file.actualPath.toLowerCase();
-                                console.log(`  - Has actualPath property: ${path}`);
-                                
-                                if (path.endsWith('.mp3') || path.endsWith('.flac') || path.endsWith('.wav')) {
-                                    console.log(`  - MATCH: Media file by actualPath`);
-                                    return true;
-                                }
-                            }
-                            
-                            // Case 5: File has simpleId that indicates it's from our mapping system
-                            if (file.simpleId && file.simpleId.toLowerCase().endsWith('.mp3')) {
-                                console.log(`  - MATCH: Media file by simpleId: ${file.simpleId}`);
-                                return true;
-                            }
-                            
-                            console.log(`  - NOT A MATCH: Not detected as media file`);
-                            return false;
-                        });
-                            
-                        const textFiles = data.files.filter(file => {
-                            const filename = file.name.toLowerCase();
-                            return (
-                                filename.endsWith('.txt') || 
-                                filename.endsWith('.log') ||
-                                filename === 'files.json' ||
-                                filename.includes('error') ||
-                                filename.includes('info')
-                            );
-                        });
-                        
-                        // Display media files first
-                        console.log('Media files to display:', mediaFiles);
-                        console.log('All files from server:', data.files);
-                        
-                        // Detailed inspection of each file
-                        if (data.files && data.files.length > 0) {
-                            data.files.forEach(file => {
-                                console.log(`Analyzing file: ${file.name}`);
-                                console.log(`  - URL: ${file.url}`);
-                                console.log(`  - Type: ${file.type || 'unknown'}`);
-                                console.log(`  - Size: ${file.size || 'unknown'}`);
-                                console.log(`  - Is media file: ${mediaFiles.includes(file)}`);
-                                
-                                // Check why it might not be detected as a media file
-                                const filename = file.name ? file.name.toLowerCase() : '';
-                                console.log(`  - Ends with .mp3: ${filename.endsWith('.mp3')}`);
-                                console.log(`  - Ends with .mp4: ${filename.endsWith('.mp4')}`);
-                                console.log(`  - Ends with .flac: ${filename.endsWith('.flac')}`);
-                                console.log(`  - Ends with .wav: ${filename.endsWith('.wav')}`);
-                                console.log(`  - Has audio MIME type: ${file.type && file.type.startsWith('audio/')}`);
-                            });
-                        }
-                        
-                        // Update the files element based on what we found
-                        if (data.downloadButtonsHtml && data.downloadButtonsHtml.trim() !== '') {
-                            console.log('Using pre-generated download buttons HTML from server');
-                            filesElement.innerHTML = '<h3>Available Downloads:</h3>' + data.downloadButtonsHtml;
-                        }
-                        else if (mediaFiles.length > 0 || (data.files && data.files.length > 0)) {
-                            console.log(`Found ${mediaFiles.length} media files to display or ${data.files.length} total files`);
-                            // Clear the "No files available" message
-                            filesElement.innerHTML = '<h3>Available Downloads:</h3>';
-                            
-                            // If we have media files, display those
-                            if (mediaFiles.length > 0) {
-                                console.log('Displaying media files');
-                                mediaFiles.forEach(file => {
-                                    const downloadLink = document.createElement('a');
-                                    downloadLink.href = file.url;
-                                    downloadLink.className = 'download-link';
-                                
-                                // Use the most appropriate name available
-                                // Priority: path > name > originalPath > actualPath > simpleId
-                                let displayName = '';
-                                if (file.path) {
-                                    displayName = file.path;
-                                    console.log(`Using path as display name: ${displayName}`);
-                                } else if (file.name) {
-                                    displayName = file.name;
-                                    console.log(`Using name as display name: ${displayName}`);
-                                } else if (file.originalPath) {
-                                    displayName = file.originalPath;
-                                    console.log(`Using originalPath as display name: ${displayName}`);
-                                } else if (file.actualPath) {
-                                    displayName = file.actualPath;
-                                    console.log(`Using actualPath as display name: ${displayName}`);
-                                } else if (file.simpleId) {
-                                    // Convert simpleId like track_1.mp3 to a more user-friendly name
-                                    displayName = `Track ${file.simpleId.split('_')[1]}`;
-                                    console.log(`Using simpleId as display name: ${displayName}`);
-                                } else {
-                                    displayName = 'Audio File';
-                                    console.log(`Using default display name`);
-                                }
-                                
-                                downloadLink.textContent = displayName;
-                                downloadLink.setAttribute('download', displayName);
-                                
-                                // Add file size if available
-                                if (file.size) {
-                                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                                    downloadLink.textContent += ` (${sizeMB} MB)`;
-                                }
-                                
-                                    filesElement.appendChild(downloadLink);
-                                    filesElement.appendChild(document.createElement('br'));
-                                });
-                            } else {
-                                // If no media files, display all files with URLs
-                                console.log('No media files detected, showing all files with URLs');
-                                const filesWithUrls = data.files.filter(file => file.url);
-                                
-                                if (filesWithUrls.length > 0) {
-                                    filesWithUrls.forEach(file => {
-                                        const downloadLink = document.createElement('a');
-                                        downloadLink.href = file.url;
-                                        downloadLink.className = 'download-link';
-                                        
-                                        // Use the most appropriate name available
-                                        let displayName = '';
-                                        if (file.path) {
-                                            displayName = file.path;
-                                        } else if (file.name) {
-                                            displayName = file.name;
-                                        } else if (file.originalPath) {
-                                            displayName = file.originalPath;
-                                        } else if (file.actualPath) {
-                                            displayName = file.actualPath;
-                                        } else {
-                                            displayName = 'Download File';
-                                        }
-                                        
-                                        downloadLink.textContent = displayName;
-                                        downloadLink.setAttribute('download', displayName);
-                                        
-                                        // Add file size if available
-                                        if (file.size) {
-                                            const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                                            downloadLink.textContent += ` (${sizeMB} MB)`;
-                                        }
-                                        
-                                        filesElement.appendChild(downloadLink);
-                                        filesElement.appendChild(document.createElement('br'));
-                                    });
-                                }
-                            }
-                        } else if (data.files && data.files.length > 0) {
-                            console.log('No media files detected, falling back to showing all non-text files');
-                            // If no media files were detected but we have files, show all non-text files
-                            console.log('No media files detected, showing all non-text files');
-                            
-                            const nonTextFiles = data.files.filter(file => {
-                                const filename = (file.name || '').toLowerCase();
-                                return !(
-                                    filename.endsWith('.txt') || 
-                                    filename === 'files.json' || 
-                                    filename.includes('error') || 
-                                    filename.includes('info')
-                                );
-                            });
-                            
-                            if (nonTextFiles.length > 0) {
-                                nonTextFiles.forEach(file => {
+                                newFiles.forEach(file => {
                                     const downloadLink = document.createElement('a');
                                     downloadLink.href = file.url;
                                     downloadLink.className = 'download-link';
                                     downloadLink.textContent = file.name;
                                     downloadLink.setAttribute('download', file.name);
+                                    
+                                    // Add click event handler to log downloads
+                                    downloadLink.addEventListener('click', function(e) {
+                                        console.log(`Download link clicked: ${downloadLink.href}`);
+                                        // Let the download happen naturally
+                                    });
+                                    
                                     filesElement.appendChild(downloadLink);
                                     filesElement.appendChild(document.createElement('br'));
                                 });
                             } else {
-                                filesElement.innerHTML = `
-                                    <div class="error-message">
-                                        <p><strong>No downloadable files found.</strong></p>
-                                        <p>This could be due to one of the following reasons:</p>
-                                        <ul>
-                                            <li>The track is not available for download on Deezer</li>
-                                            <li>Your Deezer ARL token may not have sufficient permissions</li>
-                                            <li>The track may be region-restricted</li>
-                                        </ul>
-                                        <p>Try another track or check your ARL token.</p>
-                                    </div>
-                                `;
-                            }
-                        } else {
-                            // Check if the download is actually complete but no files were found
-                            if (data.status === 'complete') {
-                                // Check the download directory directly
-                                console.log('Download is complete but no files found in the response. Checking download directory directly...');
-                                
-                                filesElement.innerHTML = `
-                                    <div class="error-message">
-                                        <p><strong>Download completed, but no files were found in the response.</strong></p>
-                                        <p>The download may still be processing. Click the button below to check again.</p>
-                                    </div>
-                                `;
-                            } else {
-                                filesElement.innerHTML = `
-                                    <div class="error-message">
-                                        <p><strong>No files available for download.</strong></p>
-                                        <p>The download may still be processing. Click the button below to check again.</p>
-                                    </div>
-                                `;
+                                const noNewFilesMessage = document.createElement('p');
+                                noNewFilesMessage.textContent = 'No additional files found.';
+                                filesElement.appendChild(noNewFilesMessage);
                             }
                             
-                            // Add a refresh button to check again
-                            const refreshButton = document.createElement('button');
-                            refreshButton.textContent = 'Check for Downloads';
-                            refreshButton.className = 'download-button';
-                            refreshButton.style.marginTop = '10px';
-                            refreshButton.onclick = async () => {
-                                refreshButton.textContent = 'Checking...';
-                                refreshButton.disabled = true;
-                                
-                                try {
-                                    // Force a server-side refresh by adding a timestamp parameter
-                                    const timestamp = new Date().getTime();
-                                    const data = await fetch(`/download/status/${downloadId}?refresh=true&t=${timestamp}`)
-                                        .then(response => response.json());
-                                    
-                                    console.log('Refresh response:', data);
-                                    
-                                    // Check for pre-generated HTML first
-                                    if (data.downloadButtonsHtml && data.downloadButtonsHtml.trim() !== '') {
-                                        console.log('Using pre-generated download buttons HTML from server refresh');
-                                        filesElement.innerHTML = '<h3>Available Downloads:</h3>' + data.downloadButtonsHtml;
-                                    }
-                                    // Then check for files array
-                                    else if (data.files && data.files.length > 0) {
-                                        filesElement.innerHTML = '';
-                                        
-                                        // Create a header for the downloads
-                                        const header = document.createElement('h3');
-                                        header.textContent = 'Available Downloads:';
-                                        filesElement.appendChild(header);
-                                        
-                                        data.files.forEach(file => {
-                                            const downloadLink = document.createElement('a');
-                                            downloadLink.href = file.url;
-                                            downloadLink.className = 'download-link';
-                                            
-                                            // Use the most appropriate name available
-                                            let displayName = file.path || file.name || file.originalPath || file.actualPath || 'Download File';
-                                            downloadLink.textContent = displayName;
-                                            downloadLink.setAttribute('download', displayName);
-                                            
-                                            filesElement.appendChild(downloadLink);
-                                            filesElement.appendChild(document.createElement('br'));
-                                        });
-                                    } 
-                                    // If still no files, try one more direct check to the music directory
-                                    else {
-                                        console.log('No files found in response, checking music directory directly');
-                                        
-                                        // Make a special request to check the music directory for recent files
-                                        const musicCheckData = await fetch(`/download/check-music?downloadId=${downloadId}&t=${timestamp}`)
-                                            .then(response => response.json())
-                                            .catch(err => ({ files: [] }));
-                                        
-                                        if (musicCheckData.files && musicCheckData.files.length > 0) {
-                                            filesElement.innerHTML = '';
-                                            
-                                            // Create a header for the downloads
-                                            const header = document.createElement('h3');
-                                            header.textContent = 'Available Downloads:';
-                                            filesElement.appendChild(header);
-                                            
-                                            musicCheckData.files.forEach(file => {
-                                                const downloadLink = document.createElement('a');
-                                                downloadLink.href = file.url;
-                                                downloadLink.className = 'download-link';
-                                                downloadLink.textContent = file.name;
-                                                downloadLink.setAttribute('download', file.name);
-                                                
-                                                filesElement.appendChild(downloadLink);
-                                                filesElement.appendChild(document.createElement('br'));
-                                            });
-                                        } else {
-                                            filesElement.innerHTML = `
-                                                <div class="error-message">
-                                                    <p><strong>Still no files available for download.</strong></p>
-                                                    <p>This could be due to one of the following reasons:</p>
-                                                    <ul>
-                                                        <li>The track is not available for download on Deezer</li>
-                                                        <li>Your Deezer ARL token may not have sufficient permissions</li>
-                                                        <li>The track may be region-restricted</li>
-                                                    </ul>
-                                                    <p>Try another track or check your ARL token.</p>
-                                                </div>
-                                            `;
-                                            
-                                            refreshButton.textContent = 'Check Again';
-                                            refreshButton.disabled = false;
-                                            filesElement.appendChild(refreshButton);
-                                        }
-                                    }
-                                } catch (error) {
-                                    console.error('Error checking download status:', error);
-                                    filesElement.innerHTML = '<p>Error checking download status. Please try again.</p>';
-                                    
-                                    refreshButton.textContent = 'Retry';
-                                    refreshButton.disabled = false;
-                                    filesElement.appendChild(refreshButton);
-                                }
-                            };
-                            
+                            // Re-add the refresh button
+                            refreshButton.textContent = 'Check for More Files';
+                            refreshButton.disabled = false;
                             filesElement.appendChild(refreshButton);
-                        }
-                        
-                        // If there are text files (likely error or info files), show them separately
-                        if (textFiles.length > 0) {
-                            const infoHeader = document.createElement('h3');
-                            infoHeader.textContent = 'Additional Information';
-                            infoHeader.style.marginTop = '20px';
-                            filesElement.appendChild(infoHeader);
+                        } else {
+                            // First time showing files
+                            filesElement.innerHTML = '';
                             
-                            const infoText = document.createElement('p');
-                            infoText.textContent = 'There may have been issues with your download. Please check these information files:';
-                            filesElement.appendChild(infoText);
+                            const header = document.createElement('h3');
+                            header.textContent = 'Available Downloads:';
+                            filesElement.appendChild(header);
                             
-                            textFiles.forEach(file => {
-                                const infoLink = document.createElement('a');
-                                infoLink.href = file.url;
-                                infoLink.className = 'info-link';
-                                infoLink.textContent = file.name;
-                                infoLink.target = '_blank'; // Open in new tab
-                                filesElement.appendChild(infoLink);
+                            musicCheckData.files.forEach(file => {
+                                const downloadLink = document.createElement('a');
+                                downloadLink.href = file.url;
+                                downloadLink.className = 'download-link';
+                                downloadLink.textContent = file.name;
+                                downloadLink.setAttribute('download', file.name);
+                                
+                                // Add click event handler to log downloads
+                                downloadLink.addEventListener('click', function(e) {
+                                    console.log(`Download link clicked: ${downloadLink.href}`);
+                                    // Let the download happen naturally
+                                });
+                                
+                                filesElement.appendChild(downloadLink);
+                                filesElement.appendChild(document.createElement('br'));
                             });
+                            
+                            // Add a refresh button
+                            addRefreshButton(downloadId, progressElement, filesElement);
                         }
-                    } else if (data.status === 'in_progress') {
-                        // Download still in progress
-                        progressElement.textContent = 'Download in progress... Please wait.';
-                    } else if (data.status === 'error') {
-                        // Error occurred
-                        clearInterval(pollInterval);
-                        progressElement.innerHTML = `<div class="error-message">Error: ${data.message}</div>`;
-                        
-                        // Add helpful information for specific errors
-                        if (data.message && data.message.includes('Spotify API credentials')) {
-                            const helpText = document.createElement('div');
-                            helpText.className = 'help-text';
-                            helpText.innerHTML = `<p>To use Spotify downloads, you need to:</p>
-                                <ol>
-                                    <li>Create a Spotify Developer account at <a href="https://developer.spotify.com/dashboard" target="_blank">developer.spotify.com</a></li>
-                                    <li>Create a new application to get Client ID and Secret</li>
-                                    <li>Create a <code>.env</code> file in the project root directory</li>
-                                    <li>Add your credentials to the <code>.env</code> file:</li>
-                                </ol>
-                                <pre class="code-block">
-# Spotify API Credentials
-SPOTIFY_CLIENT_ID=your_client_id_here
-SPOTIFY_CLIENT_SECRET=your_client_secret_here</pre>
-                                <p>See <code>.env.example</code> for a complete template.</p>`;
-                            filesElement.appendChild(helpText);
-                        } else if (data.message && data.message.includes('Deezer ARL token not configured')) {
-                            const helpText = document.createElement('div');
-                            helpText.className = 'help-text';
-                            helpText.innerHTML = `<p>To use Spotify and Deezer downloads, you need to:</p>
-                                <ol>
-                                    <li>Create a Deezer account at <a href="https://www.deezer.com" target="_blank">deezer.com</a></li>
-                                    <li>Log in to Deezer in your browser</li>
-                                    <li>Get your ARL token:</li>
+                    } else {
+                        // No files found
+                        if (refreshButton) {
+                            // This was a refresh attempt
+                            refreshButton.textContent = 'Check Again';
+                            refreshButton.disabled = false;
+                            
+                            const noFilesMessage = document.createElement('p');
+                            noFilesMessage.textContent = 'No additional files found.';
+                            noFilesMessage.style.marginTop = '10px';
+                            
+                            // Insert before the refresh button
+                            filesElement.insertBefore(noFilesMessage, refreshButton);
+                        } else {
+                            // First time checking
+                            filesElement.innerHTML = `
+                                <div class="error-message">
+                                    <p><strong>No files available for download.</strong></p>
+                                    <p>This could be due to one of the following reasons:</p>
                                     <ul>
-                                        <li>Open Developer Tools (F12)</li>
-                                        <li>Go to Application tab > Cookies > www.deezer.com</li>
-                                        <li>Find the 'arl' cookie and copy its value</li>
+                                        <li>The track is not available for download on Deezer</li>
+                                        <li>Your Deezer ARL token may not have sufficient permissions</li>
+                                        <li>The track may be region-restricted</li>
                                     </ul>
-                                    <li>Create a <code>.env</code> file in the project root directory</li>
-                                    <li>Add your ARL token to the <code>.env</code> file:</li>
-                                </ol>
-                                <pre class="code-block">
-# Deezer ARL Token
-DEEZER_ARL=your_arl_token_here</pre>
-                                <p>See <code>.env.example</code> for a complete template.</p>`;
-                            filesElement.appendChild(helpText);
+                                    <p>Try another track or check your ARL token.</p>
+                                </div>
+                            `;
+                            
+                            // Add a refresh button
+                            addRefreshButton(downloadId, progressElement, filesElement);
                         }
-                    } else if (data.status === 'not_found') {
-                        // Download not found
-                        clearInterval(pollInterval);
-                        progressElement.textContent = 'Download not found. It may have been removed.';
                     }
                 } catch (error) {
-                    console.error('Error polling download status:', error);
-                    progressElement.textContent = 'Error checking download status. Please try again later.';
+                    console.error('Error checking for music files:', error);
+                    
+                    if (refreshButton) {
+                        // This was a refresh attempt
+                        refreshButton.textContent = 'Retry';
+                        refreshButton.disabled = false;
+                        
+                        const errorMessage = document.createElement('p');
+                        errorMessage.textContent = 'Error checking for additional files. Please try again.';
+                        errorMessage.style.color = 'red';
+                        errorMessage.style.marginTop = '10px';
+                        
+                        // Insert before the refresh button
+                        filesElement.insertBefore(errorMessage, refreshButton);
+                    } else {
+                        // First time checking
+                        filesElement.innerHTML = `
+                            <div class="error-message">
+                                <p><strong>Error checking for downloaded files.</strong></p>
+                                <p>Please try again or check the server logs for more information.</p>
+                            </div>
+                        `;
+                        
+                        // Add a refresh button
+                        addRefreshButton(downloadId, progressElement, filesElement);
+                    }
                 }
-            }, 2000);
-        }
-        
-        // Function to check download status
-        async function checkDownloadStatus(downloadId) {
-            try {
-                console.log(`Checking download status for ID: ${downloadId}`);
-                const response = await fetch(`/download/status/${downloadId}`);
-                const data = await response.json();
-                console.log(`Download status response:`, data);
-                return data;
-            } catch (error) {
-                console.error('Error checking download status:', error);
-                return { status: 'error', message: 'Failed to check download status' };
             }
-        }
+        });
     </script>
 </body>
 </html>

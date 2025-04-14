@@ -591,12 +591,14 @@ app.get('/download/status/:downloadId', (req, res) => {
               return statB.mtime.getTime() - statA.mtime.getTime();
             });
             
-            // Take the most recent file if available
+            // Check if we have any music files that match the current download
             if (recentMusicFiles.length > 0) {
-              console.log(`Final fallback found ${recentMusicFiles.length} music files, using most recent`);
-              // Just use the most recent file as it's likely from this download
-              fileUrls = [recentMusicFiles[0]];
-              console.log(`Using most recent music file: ${fileUrls[0].name}`);
+              console.log(`Final fallback found ${recentMusicFiles.length} music files`);
+              
+              // Try to find a file that matches the current download ID or URL
+              // For now, return all music files so the user can choose
+              fileUrls = recentMusicFiles;
+              console.log(`Returning all ${fileUrls.length} music files for user selection`);
             }
           } catch (err) {
             console.error(`Error in music directory fallback check: ${err.message}`);
@@ -630,15 +632,15 @@ app.get('/download/status/:downloadId', (req, res) => {
 });
 
 // Endpoint to check music directory for recent files
-app.get('/download/check-music', (req, res) => {
-  const { downloadId } = req.query;
+app.get('/download/check-music/:downloadId', (req, res) => {
+  const { downloadId } = req.params;
   console.log(`\n=== MUSIC DIRECTORY CHECK ===`);
   console.log(`Music directory check requested for download ID: ${downloadId}`);
   
   const musicDir = path.join(__dirname, 'music');
   if (!fs.existsSync(musicDir)) {
     console.log(`Music directory does not exist: ${musicDir}`);
-    return res.json({ files: [] });
+    return res.json({ success: false, files: [], message: 'Music directory not found' });
   }
   
   try {
@@ -666,66 +668,111 @@ app.get('/download/check-music', (req, res) => {
     // Sort by modification time (most recent first)
     filesWithMetadata.sort((a, b) => b.mtime - a.mtime);
     
-    // Take the most recent file if available, or all files if no downloadId provided
-    const filesToReturn = downloadId && filesWithMetadata.length > 0 ? [filesWithMetadata[0]] : filesWithMetadata;
+    // Return all files so the user can select the correct one
+    const filesToReturn = filesWithMetadata;
     
-    console.log(`Found ${filesWithMetadata.length} audio files in music directory, returning ${filesToReturn.length}`);
+    console.log(`Found ${filesWithMetadata.length} audio files in music directory, returning all files for user selection`);
+    
+    // Generate robust download buttons HTML with proper download attributes
+    const downloadButtonsHtml = filesToReturn.map(file => {
+      const fileSize = file.size ? `(${(file.size / (1024 * 1024)).toFixed(2)} MB)` : '';
+      // Ensure the download attribute is properly set
+      return `<a href="${file.url}" class="download-link" download="${file.name}" onclick="event.stopPropagation();">${file.name} ${fileSize}</a>`;
+    }).join('<br>');
+    
     return res.json({ 
+      success: true,
       files: filesToReturn,
-      downloadButtonsHtml: filesToReturn.map(file => {
-        const fileSize = file.size ? `(${(file.size / (1024 * 1024)).toFixed(2)} MB)` : '';
-        return `<a href="${file.url}" class="download-link" download="${file.name}">${file.name} ${fileSize}</a>`;
-      }).join('<br>')
+      downloadButtonsHtml: downloadButtonsHtml
     });
   } catch (err) {
     console.error(`Error checking music directory: ${err.message}`);
-    return res.json({ files: [] });
+    return res.json({ 
+      success: false, 
+      files: [], 
+      message: `Error checking music directory: ${err.message}`
+    });
   }
 });
 
 // Endpoint to download a specific file
-app.get('/download/file/:downloadId/:filename', (req, res) => {
-  const { downloadId, filename } = req.params;
-  const downloadDir = path.join(__dirname, 'downloads', downloadId);
+app.get('/download/file/:location/:filename', (req, res) => {
+  const { location, filename } = req.params;
   const decodedFilename = decodeURIComponent(filename);
   
   console.log(`\n=== FILE DOWNLOAD REQUEST ===`);
   console.log(`[${new Date().toISOString()}] Download request received`);
-  console.log(`Download ID: ${downloadId}`);
+  console.log(`Location: ${location}`);
   console.log(`Encoded filename: ${filename}`);
   console.log(`Decoded filename: ${decodedFilename}`);
-  console.log(`Download directory: ${downloadDir}`);
   
-  // Verify the download directory exists
-  if (!fs.existsSync(downloadDir)) {
-    console.log(`ERROR: Download directory does not exist: ${downloadDir}`);
-    return res.status(404).json({ error: 'Download directory not found' });
+  // Determine the file path based on the location
+  let filePath;
+  if (location === 'music') {
+    filePath = path.join(__dirname, 'music', decodedFilename);
+    console.log(`Looking for file in music directory: ${filePath}`);
+  } else {
+    // Assume location is the downloadId
+    const downloadDir = path.join(__dirname, 'downloads', location);
+    filePath = path.join(downloadDir, decodedFilename);
+    console.log(`Looking for file in download directory: ${filePath}`);
   }
   
-  console.log(`SUCCESS: Download directory exists`);
+  // Verify the file exists
+  if (!fs.existsSync(filePath)) {
+    console.log(`ERROR: File does not exist: ${filePath}`);
+    return res.status(404).json({ error: 'File not found' });
+  }
   
-  // Log directory contents
+  console.log(`SUCCESS: File exists: ${filePath}`);
+  
+  // Get file stats
   try {
-    const dirContents = fs.readdirSync(downloadDir);
-    console.log(`\n=== DIRECTORY CONTENTS ===`);
-    console.log(`Files in directory (${dirContents.length} total):`);
-    dirContents.forEach((file, index) => {
-      try {
-        const stats = fs.statSync(path.join(downloadDir, file));
-        const fileSizeKB = (stats.size / 1024).toFixed(2);
-        console.log(`  ${index + 1}. ${file} (${fileSizeKB} KB) - ${stats.isDirectory() ? 'Directory' : 'File'}`);
-      } catch (err) {
-        console.log(`  ${index + 1}. ${file} (Error getting stats: ${err.message})`);
+    const stats = fs.statSync(filePath);
+    console.log(`File size: ${(stats.size / 1024).toFixed(2)} KB`);
+    
+    // Set appropriate headers for download
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(path.basename(decodedFilename))}"`);
+    res.setHeader('Content-Length', stats.size);
+    
+    // Determine content type based on file extension
+    const ext = path.extname(decodedFilename).toLowerCase();
+    let contentType = 'application/octet-stream'; // Default
+    
+    if (ext === '.mp3') contentType = 'audio/mpeg';
+    else if (ext === '.flac') contentType = 'audio/flac';
+    else if (ext === '.wav') contentType = 'audio/wav';
+    else if (ext === '.m4a') contentType = 'audio/mp4';
+    else if (ext === '.ogg') contentType = 'audio/ogg';
+    else if (ext === '.aac') contentType = 'audio/aac';
+    else if (ext === '.txt') contentType = 'text/plain';
+    else if (ext === '.json') contentType = 'application/json';
+    
+    res.setHeader('Content-Type', contentType);
+    console.log(`Set Content-Type to: ${contentType}`);
+    
+    // Stream the file to the response
+    const fileStream = fs.createReadStream(filePath);
+    
+    // Handle errors before piping
+    fileStream.on('error', (err) => {
+      console.error(`Error streaming file: ${err.message}`);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Error streaming file' });
       }
     });
+    
+    // Pipe the file to the response
+    fileStream.pipe(res);
+    
+    // Log when streaming is complete
+    fileStream.on('end', () => {
+      console.log(`File streaming completed`);
+    });
   } catch (err) {
-    console.error(`ERROR: Failed to read directory contents: ${err.message}`);
+    console.error(`ERROR: Failed to get file stats: ${err.message}`);
+    return res.status(500).json({ error: 'Failed to process file' });
   }
-  
-  // Check if we have a file mapping
-  console.log(`\n=== FILE MAPPING CHECK ===`);
-  const mappingPath = path.join(downloadDir, 'file_mapping.json');
-  console.log(`Looking for mapping file at: ${mappingPath}`);
   
   if (fs.existsSync(mappingPath)) {
     console.log(`SUCCESS: Found file mapping at ${mappingPath}`);
@@ -820,11 +867,11 @@ app.get('/download/file/:downloadId/:filename', (req, res) => {
   console.log(`\n=== FALLBACK: DIRECT FILE ACCESS ===`);
   
   // First try the exact path
-  let filePath = path.join(downloadDir, decodedFilename);
-  console.log(`Trying exact path: ${filePath}`);
+  let exactFilePath = path.join(downloadDir, decodedFilename);
+  console.log(`Trying exact path: ${exactFilePath}`);
   
   // Check if the file exists at the exact path
-  const exactPathExists = fs.existsSync(filePath);
+  const exactPathExists = fs.existsSync(exactFilePath);
   console.log(`File exists at exact path: ${exactPathExists}`);
   
   if (!exactPathExists) {
@@ -847,8 +894,8 @@ app.get('/download/file/:downloadId/:filename', (req, res) => {
       
       if (matchingFiles.length > 0) {
         // Use the first matching file found
-        filePath = path.join(downloadDir, matchingFiles[0]);
-        console.log(`Using first matching file: ${filePath}`);
+        exactFilePath = path.join(downloadDir, matchingFiles[0]);
+        console.log(`Using first matching file: ${exactFilePath}`);
       } else {
         // No matching extension, try MP3 files as a last resort
         console.log(`\n=== FALLBACK: SEARCHING FOR MP3 FILES ===`);
@@ -860,8 +907,8 @@ app.get('/download/file/:downloadId/:filename', (req, res) => {
         
         if (mp3Files.length > 0) {
           // Use the first MP3 file found
-          filePath = path.join(downloadDir, mp3Files[0]);
-          console.log(`Using first MP3 file: ${filePath}`);
+          exactFilePath = path.join(downloadDir, mp3Files[0]);
+          console.log(`Using first MP3 file: ${exactFilePath}`);
         }
       }
     } catch (err) {
@@ -871,9 +918,9 @@ app.get('/download/file/:downloadId/:filename', (req, res) => {
   
   // Final check if the file exists
   console.log(`\n=== FINAL FILE CHECK ===`);
-  console.log(`Final file path: ${filePath}`);
+  console.log(`Final file path: ${exactFilePath}`);
   
-  const finalFileExists = fs.existsSync(filePath);
+  const finalFileExists = fs.existsSync(exactFilePath);
   console.log(`Final file exists: ${finalFileExists}`);
   
   if (!finalFileExists) {
@@ -883,7 +930,7 @@ app.get('/download/file/:downloadId/:filename', (req, res) => {
   
   // Get file stats for logging
   try {
-    const stats = fs.statSync(filePath);
+    const stats = fs.statSync(exactFilePath);
     const fileSizeKB = (stats.size / 1024).toFixed(2);
     console.log(`File size: ${fileSizeKB} KB`);
     console.log(`File last modified: ${stats.mtime}`);
@@ -891,9 +938,9 @@ app.get('/download/file/:downloadId/:filename', (req, res) => {
     console.error(`ERROR: Failed to get file stats: ${err.message}`);
   }
   
-  console.log(`SUCCESS: Sending file: ${filePath}`);
+  console.log(`SUCCESS: Sending file: ${exactFilePath}`);
   // Send the file
-  res.download(filePath, (err) => {
+  res.download(exactFilePath, (err) => {
     if (err) {
       console.error(`ERROR: Failed to send file: ${err.message}`);
     } else {

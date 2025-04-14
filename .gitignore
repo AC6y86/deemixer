@@ -4,3 +4,4 @@ music/
 npm-debug.log
 *.log
 deemix-env
+venv
